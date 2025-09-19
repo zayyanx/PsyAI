@@ -44,7 +44,7 @@ export default function AppSidebar({
 }: AppSidebarProps) {
   const [location, navigate] = useLocation();
 
-  const patientItems = [
+  const patientItems: MenuItem[] = [
     {
       title: "Chat with AI",
       url: "/chat",
@@ -57,7 +57,7 @@ export default function AppSidebar({
     },
   ];
 
-  const expertItems = [
+  const expertItems: MenuItem[] = [
     {
       title: "Dashboard",
       url: "/dashboard",

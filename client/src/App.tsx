@@ -10,6 +10,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import PatientChat from "@/pages/PatientChat";
 import ExpertDashboardPage from "@/pages/ExpertDashboardPage";
 import PatientSessions from "@/pages/PatientSessions";
+import Settings from "@/pages/Settings";
 import NotFound from "@/pages/not-found";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ function Router({ userRole }: { userRole: "patient" | "expert" }) {
       <Route path="/dashboard" component={ExpertDashboardPage} />
       <Route path="/cases" component={() => <ExpertDashboardPage />} />
       <Route path="/conversations" component={() => <ExpertDashboardPage />} />
+      <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>
   );
