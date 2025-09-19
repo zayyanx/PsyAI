@@ -12,12 +12,18 @@ export interface ConversationCardProps {
   patientName: string;
   status: "active" | "pending_review" | "reviewed" | "closed";
   confidenceScore: number;
-  needsExpertReview: boolean;
+  needsExpertReview?: boolean; // Legacy field - kept for compatibility
+  needsNurseReview?: boolean;
+  needsDoctorReview?: boolean;
+  escalatedToDoctor?: boolean;
+  escalationReason?: string;
   lastMessage: string;
   timestamp: string;
   messageCount: number;
   onView?: () => void;
   onReview?: () => void;
+  onEscalate?: () => void;
+  viewerRole?: "nurse" | "doctor";
   className?: string;
 }
 
@@ -27,12 +33,18 @@ export default function ConversationCard({
   patientName,
   status,
   confidenceScore,
-  needsExpertReview,
+  needsExpertReview = false,
+  needsNurseReview = false,
+  needsDoctorReview = false,
+  escalatedToDoctor = false,
+  escalationReason,
   lastMessage,
   timestamp,
   messageCount,
   onView,
   onReview,
+  onEscalate,
+  viewerRole = "nurse",
   className,
 }: ConversationCardProps) {
   const getStatusBadge = () => {
@@ -68,7 +80,7 @@ export default function ConversationCard({
     }
   };
 
-  const shouldHighlight = needsExpertReview || confidenceScore < 60;
+  const shouldHighlight = needsExpertReview || needsNurseReview || needsDoctorReview || escalatedToDoctor || confidenceScore < 90;
 
   return (
     <Card 
@@ -107,9 +119,19 @@ export default function ConversationCard({
           
           <div className="flex flex-col items-end gap-2">
             {getStatusBadge()}
-            {needsExpertReview && (
-              <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 text-xs">
-                Expert Review Needed
+            {(needsNurseReview || needsExpertReview) && (
+              <Badge variant="outline" className="bg-chart-2/10 text-chart-2 border-chart-2/20 text-xs">
+                Nurse Review Needed
+              </Badge>
+            )}
+            {needsDoctorReview && (
+              <Badge variant="outline" className="bg-medical-blue/10 text-medical-blue border-medical-blue/20 text-xs">
+                Doctor Review Needed
+              </Badge>
+            )}
+            {escalatedToDoctor && (
+              <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20 text-xs">
+                Escalated to Doctor
               </Badge>
             )}
           </div>
@@ -142,7 +164,7 @@ export default function ConversationCard({
             View
           </Button>
           
-          {(needsExpertReview || status === "pending_review") && (
+          {(needsExpertReview || needsNurseReview || needsDoctorReview || status === "pending_review") && (
             <Button 
               size="sm" 
               onClick={onReview}
@@ -150,6 +172,19 @@ export default function ConversationCard({
               data-testid="button-review-conversation"
             >
               Review
+            </Button>
+          )}
+          
+          {viewerRole === "nurse" && onEscalate && (needsNurseReview || confidenceScore < 90) && (
+            <Button 
+              variant="outline"
+              size="sm" 
+              onClick={onEscalate}
+              className="flex-1 text-warning hover:text-warning"
+              data-testid="button-escalate-conversation"
+            >
+              <AlertTriangle className="h-4 w-4 mr-1" />
+              Escalate
             </Button>
           )}
         </div>

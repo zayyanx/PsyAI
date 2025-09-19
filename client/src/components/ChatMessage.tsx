@@ -7,13 +7,16 @@ import { cn } from "@/lib/utils";
 
 export interface ChatMessageProps {
   id: string;
-  sender: "patient" | "ai" | "expert";
+  sender: "patient" | "ai" | "nurse" | "doctor";
   content: string;
   timestamp: string;
   confidenceScore?: number;
-  expertAnnotation?: string;
-  isReviewed?: boolean;
-  viewerRole?: "patient" | "expert"; // Controls what information is visible
+  nurseAnnotation?: string;
+  doctorAnnotation?: string;
+  isNurseReviewed?: boolean;
+  isDoctorReviewed?: boolean;
+  escalatedToDoctor?: boolean;
+  viewerRole?: "patient" | "nurse" | "doctor"; // Controls what information is visible
 }
 
 export default function ChatMessage({
@@ -21,18 +24,25 @@ export default function ChatMessage({
   content,
   timestamp,
   confidenceScore,
-  expertAnnotation,
-  isReviewed = false,
+  nurseAnnotation,
+  doctorAnnotation,
+  isNurseReviewed = false,
+  isDoctorReviewed = false,
+  escalatedToDoctor = false,
   viewerRole = "patient",
 }: ChatMessageProps) {
   const isPatient = sender === "patient";
   const isAI = sender === "ai";
-  const isExpert = sender === "expert";
+  const isNurse = sender === "nurse";
+  const isDoctor = sender === "doctor";
+  const isMedicalStaff = isNurse || isDoctor;
 
   const getIcon = () => {
     if (isPatient) return <User className="h-4 w-4" />;
     if (isAI) return <Bot className="h-4 w-4" />;
-    return <Stethoscope className="h-4 w-4" />;
+    if (isNurse) return <Stethoscope className="h-4 w-4" />;
+    if (isDoctor) return <Stethoscope className="h-4 w-4" />;
+    return <User className="h-4 w-4" />;
   };
 
   const getConfidenceColor = (score: number) => {
@@ -59,7 +69,8 @@ export default function ChatMessage({
         <AvatarFallback className={cn(
           isPatient && "bg-primary text-primary-foreground",
           isAI && "bg-chart-1 text-white",
-          isExpert && "bg-medical-blue text-medical-blue-foreground"
+          isNurse && "bg-chart-2 text-white",
+          isDoctor && "bg-medical-blue text-medical-blue-foreground"
         )}>
           {getIcon()}
         </AvatarFallback>
@@ -70,15 +81,16 @@ export default function ChatMessage({
           "p-4",
           isPatient && "bg-primary text-primary-foreground",
           isAI && "bg-card border-chart-1/20",
-          isExpert && "bg-medical-blue text-medical-blue-foreground"
+          isNurse && "bg-chart-2/10 text-chart-2-foreground border-chart-2/20",
+          isDoctor && "bg-medical-blue text-medical-blue-foreground"
         )}>
           <div className="space-y-2">
             <p className="text-sm leading-relaxed" data-testid="message-content">
               {content}
             </p>
             
-            {/* AI Confidence Score - Only show to experts/reviewers, never to patients */}
-            {viewerRole === "expert" && isAI && confidenceScore !== undefined && (
+            {/* AI Confidence Score - Only show to medical staff, never to patients */}
+            {(viewerRole === "nurse" || viewerRole === "doctor") && isAI && confidenceScore !== undefined && (
               <div className="space-y-2 pt-2 border-t border-border/50">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Confidence Score</span>
@@ -87,26 +99,49 @@ export default function ChatMessage({
                   </span>
                 </div>
                 <Progress value={confidenceScore} className="h-1" />
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   {getConfidenceBadge(confidenceScore)}
-                  {isReviewed && (
+                  {isNurseReviewed && (
+                    <Badge variant="outline" className="bg-chart-2/10 text-chart-2 border-chart-2/20">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Nurse Reviewed
+                    </Badge>
+                  )}
+                  {isDoctorReviewed && (
                     <Badge variant="outline" className="bg-success/10 text-success border-success/20">
                       <CheckCircle className="h-3 w-3 mr-1" />
-                      Expert Reviewed
+                      Doctor Reviewed
+                    </Badge>
+                  )}
+                  {escalatedToDoctor && (
+                    <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">
+                      <AlertTriangle className="h-3 w-3 mr-1" />
+                      Escalated to Doctor
                     </Badge>
                   )}
                 </div>
               </div>
             )}
 
-            {/* Expert Annotation - Only show to experts/reviewers, never to patients */}
-            {viewerRole === "expert" && expertAnnotation && (
-              <Card className="p-3 bg-warning/10 border-warning/20">
+            {/* Medical Staff Annotations - Only show to medical staff, never to patients */}
+            {(viewerRole === "nurse" || viewerRole === "doctor") && nurseAnnotation && (
+              <Card className="p-3 bg-chart-2/10 border-chart-2/20">
                 <div className="flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
+                  <Stethoscope className="h-4 w-4 text-chart-2 flex-shrink-0 mt-0.5" />
                   <div className="space-y-1">
-                    <p className="text-xs font-medium text-warning">Expert Note</p>
-                    <p className="text-xs text-muted-foreground">{expertAnnotation}</p>
+                    <p className="text-xs font-medium text-chart-2">Nurse Note</p>
+                    <p className="text-xs text-muted-foreground">{nurseAnnotation}</p>
+                  </div>
+                </div>
+              </Card>
+            )}
+            {(viewerRole === "nurse" || viewerRole === "doctor") && doctorAnnotation && (
+              <Card className="p-3 bg-medical-blue/10 border-medical-blue/20">
+                <div className="flex items-start gap-2">
+                  <Stethoscope className="h-4 w-4 text-medical-blue flex-shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-medical-blue">Doctor Note</p>
+                    <p className="text-xs text-muted-foreground">{doctorAnnotation}</p>
                   </div>
                 </div>
               </Card>

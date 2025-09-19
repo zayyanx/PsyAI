@@ -1,8 +1,10 @@
-import ExpertDashboard from '@/components/ExpertDashboard';
+import MedicalDashboard from '@/components/ExpertDashboard';
 import { type ConversationCardProps } from '@/components/ConversationCard';
 import { useState } from 'react';
 
 export default function ExpertDashboardPage() {
+  // In a real app, this would come from auth context or props
+  const [userRole] = useState<"nurse" | "doctor">("nurse"); // Default to nurse for demo
   const [conversations] = useState<ConversationCardProps[]>([
     {
       id: '1',
@@ -10,7 +12,8 @@ export default function ExpertDashboardPage() {
       patientName: 'Sarah Johnson',
       status: 'pending_review',
       confidenceScore: 42,
-      needsExpertReview: true,
+      needsNurseReview: true,
+      escalatedToDoctor: false,
       lastMessage: 'I\'m having panic attacks multiple times a day now. The breathing exercises aren\'t helping anymore. I feel like I\'m losing control.',
       timestamp: '30 minutes ago',
       messageCount: 15,
@@ -21,7 +24,9 @@ export default function ExpertDashboardPage() {
       patientName: 'Michael Chen',
       status: 'pending_review',
       confidenceScore: 38,
-      needsExpertReview: true,
+      needsDoctorReview: true,
+      escalatedToDoctor: true,
+      escalationReason: 'Medication adjustment requires doctor approval',
       lastMessage: 'I\'ve been on sertraline 50mg for 8 weeks. Should I increase to 100mg? I still feel depressed and the side effects are manageable.',
       timestamp: '1 hour ago',
       messageCount: 22,
@@ -32,7 +37,7 @@ export default function ExpertDashboardPage() {
       patientName: 'James Wilson',
       status: 'pending_review',
       confidenceScore: 55,
-      needsExpertReview: true,
+      needsNurseReview: true,
       lastMessage: 'The nightmares are getting worse. I think I need specialized PTSD treatment beyond what we\'ve discussed.',
       timestamp: '2 hours ago',
       messageCount: 8,
@@ -178,17 +183,25 @@ export default function ExpertDashboardPage() {
   };
 
   const handleReviewConversation = (id: string) => {
-    console.log('Starting expert review for ID:', id);
-    // In a real app, this would open the expert review interface
-    alert(`Starting expert review process for conversation ${id}`);
+    console.log('Starting medical review for ID:', id);
+    // In a real app, this would open the medical review interface
+    alert(`Starting ${userRole} review process for conversation ${id}`);
+  };
+
+  const handleEscalateToDoctor = (id: string) => {
+    console.log('Escalating to doctor for ID:', id);
+    // In a real app, this would escalate the case to a doctor
+    alert(`Escalating conversation ${id} to doctor for review`);
   };
 
   return (
-    <ExpertDashboard
-      expertName="Dr. Sarah Wilson"
+    <MedicalDashboard
+      userRole={userRole}
+      userName={userRole === "doctor" ? "Dr. Sarah Wilson" : "Nurse Jennifer Adams"}
       conversations={conversations}
       onViewConversation={handleViewConversation}
       onReviewConversation={handleReviewConversation}
+      onEscalateToDoctor={handleEscalateToDoctor}
     />
   );
 }

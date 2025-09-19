@@ -9,21 +9,25 @@ import { AlertTriangle, CheckCircle, Clock, Search, Filter, TrendingDown } from 
 import ConversationCard, { type ConversationCardProps } from "./ConversationCard";
 import { cn } from "@/lib/utils";
 
-export interface ExpertDashboardProps {
-  expertName?: string;
+export interface MedicalDashboardProps {
+  userRole: "nurse" | "doctor";
+  userName?: string;
   conversations?: ConversationCardProps[];
   onViewConversation?: (id: string) => void;
   onReviewConversation?: (id: string) => void;
+  onEscalateToDoctor?: (id: string) => void;
   className?: string;
 }
 
-export default function ExpertDashboard({
-  expertName = "Dr. Sarah Wilson",
+export default function MedicalDashboard({
+  userRole,
+  userName = userRole === "doctor" ? "Dr. Sarah Wilson" : "Nurse Jennifer Adams",
   conversations = [],
   onViewConversation,
   onReviewConversation,
+  onEscalateToDoctor,
   className,
-}: ExpertDashboardProps) {
+}: MedicalDashboardProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("by-confidence");
 
@@ -35,7 +39,12 @@ export default function ExpertDashboard({
       
       switch (activeTab) {
         case "pending":
-          return matchesSearch && (conv.status === "pending_review" || conv.needsExpertReview);
+          // Nurses see cases needing nurse review, Doctors see cases needing doctor review or escalated cases
+          if (userRole === "nurse") {
+            return matchesSearch && (conv.status === "pending_review" || conv.needsNurseReview);
+          } else {
+            return matchesSearch && (conv.needsDoctorReview || conv.escalatedToDoctor);
+          }
         case "active":
           return matchesSearch && conv.status === "active";
         case "reviewed":
@@ -57,9 +66,11 @@ export default function ExpertDashboard({
 
   const filteredConversations = getFilteredConversations();
 
-  // Get counts for each tab
+  // Get counts for each tab based on user role
   const getCounts = () => {
-    const pending = conversations.filter(c => c.status === "pending_review" || c.needsExpertReview).length;
+    const pending = userRole === "nurse" 
+      ? conversations.filter(c => c.status === "pending_review" || c.needsNurseReview).length
+      : conversations.filter(c => c.needsDoctorReview || c.escalatedToDoctor).length;
     const active = conversations.filter(c => c.status === "active").length;
     const reviewed = conversations.filter(c => c.status === "reviewed").length;
     return { pending, active, reviewed };
@@ -67,20 +78,22 @@ export default function ExpertDashboard({
 
   const counts = getCounts();
 
-  // Get priority conversations (low confidence or expert review needed)
-  const priorityConversations = conversations.filter(c => c.confidenceScore < 60 || c.needsExpertReview);
+  // Get priority conversations based on role - using <90% threshold for nurse triage
+  const priorityConversations = userRole === "nurse" 
+    ? conversations.filter(c => c.confidenceScore < 90 || c.needsNurseReview)
+    : conversations.filter(c => c.escalatedToDoctor || c.needsDoctorReview);
 
   return (
-    <div className={cn("space-y-6", className)} data-testid="expert-dashboard">
+    <div className={cn("space-y-6", className)} data-testid="medical-dashboard">
       {/* Header */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold" data-testid="dashboard-title">
-              Expert Dashboard
+              {userRole === "nurse" ? "Nurse Dashboard" : "Doctor Dashboard"}
             </h1>
-            <p className="text-muted-foreground" data-testid="expert-name">
-              Welcome back, {expertName}
+            <p className="text-muted-foreground" data-testid="user-name">
+              Welcome back, {userName}
             </p>
           </div>
           <div className="flex gap-2">
@@ -195,7 +208,7 @@ export default function ExpertDashboard({
               <div className="flex items-center gap-2">
                 <TrendingDown className="h-4 w-4 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">
-                  Cases ranked by confidence score (lowest first). Cases below 90% require expert review.
+                  Cases ranked by confidence score (lowest first). Cases below 90% require nurse review.
                 </p>
               </div>
             </div>
@@ -215,8 +228,10 @@ export default function ExpertDashboard({
                   <ConversationCard
                     key={conversation.id}
                     {...conversation}
+                    viewerRole={userRole}
                     onView={() => onViewConversation?.(conversation.id)}
                     onReview={() => onReviewConversation?.(conversation.id)}
+                    onEscalate={userRole === "nurse" ? () => onEscalateToDoctor?.(conversation.id) : undefined}
                   />
                 ))
               )}
@@ -227,3 +242,6 @@ export default function ExpertDashboard({
     </div>
   );
 }
+
+// Legacy export for compatibility
+export { MedicalDashboard as ExpertDashboard };
