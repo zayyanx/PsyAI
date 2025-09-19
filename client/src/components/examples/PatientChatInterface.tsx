@@ -10,8 +10,6 @@ export default function PatientChatInterfaceExample() {
       sender: 'ai',
       content: 'Hello! I\'m your AI mental health assistant. I\'m here to provide support and guidance, with expert oversight to ensure you receive the best care. How are you feeling today?',
       timestamp: '10:30 AM',
-      confidenceScore: 95,
-      isReviewed: true,
     },
     {
       id: '2', 
@@ -24,7 +22,6 @@ export default function PatientChatInterfaceExample() {
       sender: 'ai',
       content: 'Thank you for sharing that with me. Workplace anxiety is very common, and I want to help you develop some effective coping strategies. Can you tell me more about when these feelings are strongest? Is it throughout the workday, or mainly when deadlines approach?',
       timestamp: '10:33 AM',
-      confidenceScore: 87,
     },
   ]);
 
@@ -49,7 +46,7 @@ export default function PatientChatInterfaceExample() {
         sender: 'ai',
         content: 'I understand. Let me help you with some strategies for managing work-related anxiety. Based on what you\'ve shared, I\'d recommend starting with some grounding techniques that you can use during stressful moments at work.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        confidenceScore: Math.floor(Math.random() * 40) + 60, // Random score between 60-100
+        // Patient view doesn't show confidence scores - responses below 90% confidence are filtered by proxy agent
       };
       
       setMessages(prev => [...prev, aiResponse]);

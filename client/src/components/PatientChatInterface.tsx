@@ -92,6 +92,7 @@ export default function PatientChatInterface({
                 <ChatMessage
                   key={`${message.id}-${index}`}
                   {...message}
+                  viewerRole="patient"
                 />
               ))
             )}

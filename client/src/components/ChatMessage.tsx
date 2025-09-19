@@ -13,6 +13,7 @@ export interface ChatMessageProps {
   confidenceScore?: number;
   expertAnnotation?: string;
   isReviewed?: boolean;
+  viewerRole?: "patient" | "expert"; // Controls what information is visible
 }
 
 export default function ChatMessage({
@@ -22,6 +23,7 @@ export default function ChatMessage({
   confidenceScore,
   expertAnnotation,
   isReviewed = false,
+  viewerRole = "patient",
 }: ChatMessageProps) {
   const isPatient = sender === "patient";
   const isAI = sender === "ai";
@@ -75,8 +77,8 @@ export default function ChatMessage({
               {content}
             </p>
             
-            {/* AI Confidence Score */}
-            {isAI && confidenceScore !== undefined && (
+            {/* AI Confidence Score - Only show to experts/reviewers, never to patients */}
+            {viewerRole === "expert" && isAI && confidenceScore !== undefined && (
               <div className="space-y-2 pt-2 border-t border-border/50">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Confidence Score</span>
@@ -97,8 +99,8 @@ export default function ChatMessage({
               </div>
             )}
 
-            {/* Expert Annotation */}
-            {expertAnnotation && (
+            {/* Expert Annotation - Only show to experts/reviewers, never to patients */}
+            {viewerRole === "expert" && expertAnnotation && (
               <Card className="p-3 bg-warning/10 border-warning/20">
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />

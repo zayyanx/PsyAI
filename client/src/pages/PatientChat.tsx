@@ -10,8 +10,6 @@ export default function PatientChat() {
       sender: 'ai',
       content: 'Hello! I\'m your AI mental health assistant. I\'m here to provide personalized support and guidance, with expert oversight to ensure you receive the best care possible. How are you feeling today?',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      confidenceScore: 95,
-      isReviewed: true,
     },
   ]);
 
@@ -23,15 +21,15 @@ export default function PatientChat() {
     },
     {
       content: 'I understand how challenging that must be. Let\'s work together on some coping strategies. First, let\'s try a simple breathing exercise that you can use whenever you feel overwhelmed.',
-      confidence: 92,
-    },
-    {
-      content: 'Based on what you\'ve shared, it sounds like you might benefit from some cognitive behavioral techniques. However, I\'d recommend discussing this with a licensed therapist for personalized guidance.',
-      confidence: 67,
+      confidence: 94,
     },
     {
       content: 'I\'m here to support you through this difficult time. Remember that seeking help is a sign of strength, not weakness. Would you like me to provide some immediate coping strategies while we work on a longer-term plan?',
-      confidence: 78,
+      confidence: 91,
+    },
+    {
+      content: 'These feelings are completely valid. Let\'s focus on some grounding techniques that can help you feel more centered when you\'re overwhelmed.',
+      confidence: 93,
     },
   ];
 
@@ -52,16 +50,15 @@ export default function PatientChat() {
     // Simulate AI response with random delay and response
     setTimeout(() => {
       const randomResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)];
+      // For patient view, only show responses with 90%+ confidence
+      // Lower confidence responses would be escalated to experts first
       const aiResponse: ChatMessageProps = {
         id: (Date.now() + 1).toString(),
         sender: 'ai',
-        content: randomResponse.content,
+        content: randomResponse.confidence >= 90 ? randomResponse.content : 
+          'Let me provide you with some general guidance while I consult with our expert team for more personalized recommendations.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        confidenceScore: randomResponse.confidence,
-        // Randomly add expert annotations for low confidence responses
-        ...(randomResponse.confidence < 70 && Math.random() > 0.5 ? {
-          expertAnnotation: 'This response has been reviewed by Dr. Sarah Wilson. Consider scheduling a follow-up session to discuss personalized treatment options.'
-        } : {})
+        // Don't include confidence scores for patient view
       };
       
       setMessages(prev => [...prev, aiResponse]);

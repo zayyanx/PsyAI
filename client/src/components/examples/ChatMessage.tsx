@@ -3,12 +3,18 @@ import ChatMessage from '../ChatMessage';
 export default function ChatMessageExample() {
   return (
     <div className="p-4 space-y-4 max-w-2xl">
+      <div className="mb-4 p-3 bg-muted/50 rounded-lg">
+        <h3 className="font-medium text-sm mb-1">Expert View - Full Information</h3>
+        <p className="text-xs text-muted-foreground">Experts see confidence scores and annotations</p>
+      </div>
+      
       {/* Patient message */}
       <ChatMessage
         id="1"
         sender="patient"
         content="I've been feeling really anxious lately, especially at work. It's affecting my sleep and concentration. What should I do?"
         timestamp="2:30 PM"
+        viewerRole="expert"
       />
 
       {/* AI response with high confidence */}
@@ -19,6 +25,7 @@ export default function ChatMessageExample() {
         timestamp="2:31 PM"
         confidenceScore={92}
         isReviewed={true}
+        viewerRole="expert"
       />
 
       {/* AI response with low confidence and expert annotation */}
@@ -29,6 +36,7 @@ export default function ChatMessageExample() {
         timestamp="2:35 PM"
         confidenceScore={45}
         expertAnnotation="This response correctly suggests professional consultation but lacks specificity about therapy options. Consider recommending cognitive behavioral therapy (CBT) as a first-line treatment before medication."
+        viewerRole="expert"
       />
 
       {/* Expert message */}
