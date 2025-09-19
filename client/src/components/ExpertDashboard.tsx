@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { AlertTriangle, CheckCircle, Clock, Search, Filter } from "lucide-react";
+import { AlertTriangle, CheckCircle, Clock, Search, Filter, TrendingDown } from "lucide-react";
 import ConversationCard, { type ConversationCardProps } from "./ConversationCard";
 import { cn } from "@/lib/utils";
 
@@ -25,24 +25,37 @@ export default function ExpertDashboard({
   className,
 }: ExpertDashboardProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("pending");
+  const [activeTab, setActiveTab] = useState("by-confidence");
 
-  // Filter conversations based on search and tab
-  const filteredConversations = conversations.filter(conv => {
-    const matchesSearch = conv.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         conv.patientName.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    switch (activeTab) {
-      case "pending":
-        return matchesSearch && (conv.status === "pending_review" || conv.needsExpertReview);
-      case "active":
-        return matchesSearch && conv.status === "active";
-      case "reviewed":
-        return matchesSearch && conv.status === "reviewed";
-      default:
-        return matchesSearch;
+  // Filter and sort conversations based on search and tab
+  const getFilteredConversations = () => {
+    let filtered = conversations.filter(conv => {
+      const matchesSearch = conv.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           conv.patientName.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      switch (activeTab) {
+        case "pending":
+          return matchesSearch && (conv.status === "pending_review" || conv.needsExpertReview);
+        case "active":
+          return matchesSearch && conv.status === "active";
+        case "reviewed":
+          return matchesSearch && conv.status === "reviewed";
+        case "by-confidence":
+          return matchesSearch; // Show all for confidence ranking
+        default:
+          return matchesSearch;
+      }
+    });
+
+    // Sort by confidence score if in confidence tab (lowest first)
+    if (activeTab === "by-confidence") {
+      filtered = filtered.sort((a, b) => (a.confidenceScore || 100) - (b.confidenceScore || 100));
     }
-  });
+
+    return filtered;
+  };
+
+  const filteredConversations = getFilteredConversations();
 
   // Get counts for each tab
   const getCounts = () => {
@@ -152,7 +165,11 @@ export default function ExpertDashboard({
 
       {/* Conversation Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="by-confidence" className="relative" data-testid="tab-by-confidence">
+            <TrendingDown className="h-4 w-4 mr-1" />
+            By Confidence
+          </TabsTrigger>
           <TabsTrigger value="pending" className="relative" data-testid="tab-pending">
             Pending Review
             {counts.pending > 0 && (
@@ -173,6 +190,16 @@ export default function ExpertDashboard({
         </TabsList>
 
         <TabsContent value={activeTab} className="mt-6">
+          {activeTab === "by-confidence" && (
+            <div className="mb-4 p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <TrendingDown className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  Cases ranked by confidence score (lowest first). Cases below 90% require expert review.
+                </p>
+              </div>
+            </div>
+          )}
           <ScrollArea className="h-[600px]" data-testid="conversations-scroll">
             <div className="space-y-4 pr-4">
               {filteredConversations.length === 0 ? (
