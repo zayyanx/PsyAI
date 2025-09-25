@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useRoute } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -44,47 +45,17 @@ export default function EscalationView() {
   
   const queryClient = useQueryClient();
   
+  // All hooks must be called before any early returns
+  const [doctorNotes, setDoctorNotes] = useState('');
+  const [escalationDecision, setEscalationDecision] = useState<'accept' | 'request_more_info' | 'return_to_nurse'>('accept');
+  const [assignedDoctor, setAssignedDoctor] = useState('');
+  const [priorityLevel, setPriorityLevel] = useState('medium');
+  
   // Fetch escalation case data from API
   const { data: caseData, isLoading, error } = useQuery({
     queryKey: ['/api/messages', caseId, 'detail'],
     enabled: !!caseId,
   });
-
-  if (isLoading) {
-    return <div className="container mx-auto py-6" data-testid="escalation-loading">Loading...</div>;
-  }
-
-  if (error || !caseData) {
-    return <div className="container mx-auto py-6" data-testid="escalation-error">Error loading escalation data</div>;
-  }
-
-  const { conversation, messages, patient } = caseData;
-  const escalationCase = {
-    id: caseId || '1',
-    conversationId: conversation.id,
-    patientName: patient?.name || 'Unknown',
-    timestamp: conversation.createdAt,
-    confidenceScore: conversation.confidenceScore || 0,
-    nurseReviewerName: 'Nurse Jennifer Adams',
-    nurseNotes: 'Case escalated for clinical assessment based on low AI confidence and complexity.',
-    escalationReason: conversation.escalationReason || 'Requires professional medical evaluation',
-    urgencyLevel: (conversation.confidenceScore || 100) < 50 ? 'high' as const : 'medium' as const,
-    specialization: 'psychiatry',
-    messages: messages.map(msg => ({
-      ...msg,
-      flagged: msg.sender === 'ai' && (msg.confidenceScore || 100) < 90
-    })),
-    nurseAssessment: {
-      concernAreas: ['AI confidence low', 'Requires clinical assessment'],
-      recommendedActions: ['Doctor review', 'Clinical evaluation'],
-      timeframe: 'Within 48 hours'
-    }
-  };
-
-  const [doctorNotes, setDoctorNotes] = useState('');
-  const [escalationDecision, setEscalationDecision] = useState<'accept' | 'request_more_info' | 'return_to_nurse'>('accept');
-  const [assignedDoctor, setAssignedDoctor] = useState('');
-  const [priorityLevel, setPriorityLevel] = useState(escalationCase.urgencyLevel);
 
   // Mutation for processing escalation
   const processEscalationMutation = useMutation({
@@ -103,6 +74,44 @@ export default function EscalationView() {
       alert(`Escalation ${escalationDecision === 'accept' ? 'accepted' : escalationDecision.replace('_', ' ')}`);
     }
   });
+
+  if (isLoading) {
+    return <div className="container mx-auto py-6" data-testid="escalation-loading">Loading...</div>;
+  }
+
+  if (error || !caseData) {
+    return <div className="container mx-auto py-6" data-testid="escalation-error">Error loading escalation data</div>;
+  }
+
+  const conversation = (caseData as any)?.conversation;
+  const messages = (caseData as any)?.messages || [];
+  const patient = (caseData as any)?.patient;
+  const escalationCase = {
+    id: caseId || '1',
+    conversationId: conversation?.id,
+    patientName: patient?.name || 'Unknown',
+    timestamp: conversation?.createdAt,
+    confidenceScore: conversation?.confidenceScore || 0,
+    nurseReviewerName: 'Nurse Jennifer Adams',
+    nurseNotes: 'Case escalated for clinical assessment based on low AI confidence and complexity.',
+    escalationReason: conversation?.escalationReason || 'Requires professional medical evaluation',
+    urgencyLevel: (conversation?.confidenceScore || 100) < 50 ? 'high' as const : 'medium' as const,
+    specialization: 'psychiatry',
+    messages: messages.map((msg: any) => ({
+      ...msg,
+      flagged: msg.sender === 'ai' && (msg.confidenceScore || 100) < 90
+    })),
+    nurseAssessment: {
+      concernAreas: ['AI confidence low', 'Requires clinical assessment'],
+      recommendedActions: ['Doctor review', 'Clinical evaluation'],
+      timeframe: 'Within 48 hours'
+    }
+  };
+
+  // Update priority level after escalation case is computed
+  if (priorityLevel === 'medium' && escalationCase.urgencyLevel !== 'medium') {
+    setPriorityLevel(escalationCase.urgencyLevel);
+  }
 
   const handleProcessEscalation = () => {
     processEscalationMutation.mutate();

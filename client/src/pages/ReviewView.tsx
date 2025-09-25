@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useRoute } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -39,41 +40,18 @@ export default function ReviewView() {
   
   const queryClient = useQueryClient();
   
-  // Fetch case data from API
-  const { data: caseData, isLoading, error } = useQuery({
-    queryKey: ['/api/messages', caseId, 'detail'],
-    enabled: !!caseId,
-  });
-
-  if (isLoading) {
-    return <div className="container mx-auto py-6" data-testid="review-loading">Loading...</div>;
-  }
-
-  if (error || !caseData) {
-    return <div className="container mx-auto py-6" data-testid="review-error">Error loading case data</div>;
-  }
-
-  const { conversation, messages, patient } = caseData;
-  const reviewCase = {
-    id: caseId || '1',
-    conversationId: conversation.id,
-    patientName: patient?.name || 'Unknown',
-    timestamp: conversation.createdAt,
-    confidenceScore: conversation.confidenceScore || 0,
-    status: conversation.status,
-    reviewType: 'nurse' as const,
-    priority: (conversation.confidenceScore || 100) < 50 ? 'high' as const : 'medium' as const,
-    messages: messages.filter(msg => msg.sender === 'ai' && (msg.confidenceScore || 100) < 90).map(msg => ({
-      ...msg,
-      flagged: (msg.confidenceScore || 100) < 90
-    }))
-  };
-
+  // All hooks must be called before any early returns
   const [reviewDecision, setReviewDecision] = useState<'approve' | 'modify' | 'escalate'>('approve');
   const [reviewNotes, setReviewNotes] = useState('');
   const [actionItems, setActionItems] = useState<string[]>([]);
   const [needsFollowUp, setNeedsFollowUp] = useState(false);
   const [escalationReason, setEscalationReason] = useState('');
+  
+  // Fetch case data from API
+  const { data: caseData, isLoading, error } = useQuery({
+    queryKey: ['/api/messages', caseId, 'detail'],
+    enabled: !!caseId,
+  });
 
   // Mutation for saving review
   const saveReviewMutation = useMutation({
@@ -93,6 +71,33 @@ export default function ReviewView() {
       alert('Review saved successfully');
     }
   });
+
+  if (isLoading) {
+    return <div className="container mx-auto py-6" data-testid="review-loading">Loading...</div>;
+  }
+
+  if (error || !caseData) {
+    return <div className="container mx-auto py-6" data-testid="review-error">Error loading case data</div>;
+  }
+
+  const conversation = (caseData as any)?.conversation;
+  const messages = (caseData as any)?.messages || [];
+  const patient = (caseData as any)?.patient;
+  const reviewCase = {
+    id: caseId || '1',
+    conversationId: conversation?.id,
+    patientName: patient?.name || 'Unknown',
+    timestamp: conversation?.createdAt,
+    confidenceScore: conversation?.confidenceScore || 0,
+    status: conversation?.status,
+    reviewType: 'nurse' as const,
+    priority: (conversation?.confidenceScore || 100) < 50 ? 'high' as const : 'medium' as const,
+    messages: messages.filter((msg: any) => msg.sender === 'ai' && (msg.confidenceScore || 100) < 90).map((msg: any) => ({
+      ...msg,
+      flagged: (msg.confidenceScore || 100) < 90
+    })),
+    escalationReason: conversation?.escalationReason || undefined
+  };
 
   const handleSaveReview = () => {
     saveReviewMutation.mutate();
