@@ -38,7 +38,7 @@ export default function ExpertDashboardPage() {
 
   const handleViewConversation = (id: string) => {
     console.log('Opening conversation view for ID:', id);
-    setLocation(`/view/${id}`);
+    setLocation(`/messages/${id}`);
   };
 
   const handleReviewConversation = (id: string) => {
