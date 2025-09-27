@@ -246,16 +246,30 @@ export class MemStorage implements IStorage {
 
   async createConversation(conversation: InsertConversation): Promise<Conversation> {
     const id = randomUUID();
+    // Generate realistic detailed confidence scores that add up to a reasonable overall score
+    const detailedScores = {
+      avgDecisionAlignment: Math.floor(Math.random() * 40) + 60, // 60-99%
+      avgClinicalAccuracy: Math.floor(Math.random() * 30) + 70, // 70-99%  
+      avgSafetyAssessment: Math.floor(Math.random() * 20) + 80, // 80-99%
+      avgContextUnderstanding: Math.floor(Math.random() * 50) + 50, // 50-99%
+      avgResponseAppropriateness: Math.floor(Math.random() * 40) + 60, // 60-99%
+    };
+    
+    // Calculate overall score as weighted average of detailed scores
+    const overallScore = Math.floor(
+      (detailedScores.avgDecisionAlignment * 0.2 +
+       detailedScores.avgClinicalAccuracy * 0.25 +
+       detailedScores.avgSafetyAssessment * 0.25 +
+       detailedScores.avgContextUnderstanding * 0.15 +
+       detailedScores.avgResponseAppropriateness * 0.15)
+    );
+    
     const newConversation: Conversation = {
       ...conversation,
       id,
       status: 'active',
-      confidenceScore: 85,
-      avgDecisionAlignment: null,
-      avgClinicalAccuracy: null,
-      avgSafetyAssessment: null,
-      avgContextUnderstanding: null,
-      avgResponseAppropriateness: null,
+      confidenceScore: overallScore,
+      ...detailedScores,
       needsNurseReview: false,
       needsDoctorReview: false,
       nurseReviewedBy: null,
