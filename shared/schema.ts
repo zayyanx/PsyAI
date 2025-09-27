@@ -20,7 +20,13 @@ export const conversations = pgTable("conversations", {
   patientId: varchar("patient_id").notNull().references(() => users.id),
   title: text("title").notNull(),
   status: text("status", { enum: ["active", "pending_review", "reviewed", "closed"] }).default("active"),
-  confidenceScore: integer("confidence_score").default(85), // 0-100
+  confidenceScore: integer("confidence_score").default(85), // Overall composite score (0-100)
+  // Average confidence breakdown across all AI messages in conversation
+  avgDecisionAlignment: integer("avg_decision_alignment"),
+  avgClinicalAccuracy: integer("avg_clinical_accuracy"), 
+  avgSafetyAssessment: integer("avg_safety_assessment"),
+  avgContextUnderstanding: integer("avg_context_understanding"),
+  avgResponseAppropriateness: integer("avg_response_appropriateness"),
   needsNurseReview: boolean("needs_nurse_review").default(false),
   needsDoctorReview: boolean("needs_doctor_review").default(false),
   nurseReviewedBy: varchar("nurse_reviewed_by").references(() => users.id),
@@ -37,7 +43,13 @@ export const messages = pgTable("messages", {
   conversationId: varchar("conversation_id").notNull().references(() => conversations.id),
   sender: text("sender", { enum: ["patient", "ai", "nurse", "doctor"] }).notNull(),
   content: text("content").notNull(),
-  confidenceScore: integer("confidence_score"), // For AI messages
+  confidenceScore: integer("confidence_score"), // Overall composite score (0-100)
+  // Detailed confidence breakdown (0-100 each)
+  decisionAlignment: integer("decision_alignment"), // How well aligned with clinical protocols
+  clinicalAccuracy: integer("clinical_accuracy"), // Medical soundness of the response
+  safetyAssessment: integer("safety_assessment"), // Safety of recommendations
+  contextUnderstanding: integer("context_understanding"), // AI's grasp of patient context
+  responseAppropriateness: integer("response_appropriateness"), // Tone and approach suitability
   nurseAnnotation: text("nurse_annotation"), // Nurse feedback on AI responses
   doctorAnnotation: text("doctor_annotation"), // Doctor feedback on AI responses
   timestamp: timestamp("timestamp").defaultNow(),
