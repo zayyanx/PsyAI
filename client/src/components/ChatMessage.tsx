@@ -1,7 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Bot, User, Stethoscope, AlertTriangle, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -53,8 +52,8 @@ export default function ChatMessage({
 
   const getConfidenceBadge = (score: number) => {
     // Pass/Fail threshold at 90%
-    if (score >= 90) return <Badge variant="outline" className="bg-success/10 text-success border-success/20"><CheckCircle className="h-3 w-3 mr-1" />Pass</Badge>;
-    return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20"><AlertTriangle className="h-3 w-3 mr-1" />Fail</Badge>;
+    if (score >= 90) return <Badge variant="outline" className="bg-success/10 text-success border-success/20"><CheckCircle className="h-3 w-3 mr-1" />Pass ({score}%)</Badge>;
+    return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20"><AlertTriangle className="h-3 w-3 mr-1" />Fail ({score}%)</Badge>;
   };
 
   return (
@@ -95,10 +94,9 @@ export default function ChatMessage({
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Confidence Score</span>
                   <span className={getConfidenceColor(confidenceScore)}>
-                    {confidenceScore >= 90 ? "Pass" : "Fail"}
+                    {confidenceScore >= 90 ? "Pass" : "Fail"} ({confidenceScore}%)
                   </span>
                 </div>
-                <Progress value={confidenceScore} className="h-1" />
                 <div className="flex gap-2 flex-wrap">
                   {getConfidenceBadge(confidenceScore)}
                   {isNurseReviewed && (
