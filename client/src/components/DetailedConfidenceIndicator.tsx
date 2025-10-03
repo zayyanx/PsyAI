@@ -100,26 +100,38 @@ export default function DetailedConfidenceIndicator({
 
   const hasDetailedScores = metrics.some(metric => metric.score !== null && metric.score !== undefined);
 
+  // Calculate overall score as percentage of metrics that pass (score >= 90%)
+  const calculateOverallScore = () => {
+    const validMetrics = metrics.filter(m => m.score !== null && m.score !== undefined);
+    if (validMetrics.length === 0) return overallScore; // Fallback to provided score
+    
+    const passingMetrics = validMetrics.filter(m => m.score! >= 90).length;
+    return Math.round((passingMetrics / validMetrics.length) * 100);
+  };
+
+  const calculatedOverallScore = hasDetailedScores ? calculateOverallScore() : overallScore;
+  const overallConfidenceCalculated = getConfidenceStatus(calculatedOverallScore);
+
   const overallContent = showOverall && (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">Overall AI Confidence</span>
-        <span className={overallConfidence.color} data-testid="overall-confidence-score">
-          {overallConfidence.label}
+        <span className={overallConfidenceCalculated.color} data-testid="overall-confidence-score">
+          {overallConfidenceCalculated.label} ({calculatedOverallScore}%)
         </span>
       </div>
       
-      <Progress value={overallScore} className={progressHeight} data-testid="overall-confidence-progress" />
+      <Progress value={calculatedOverallScore} className={progressHeight} data-testid="overall-confidence-progress" />
       
       <div className="flex items-center gap-2">
         <Badge 
           variant="outline" 
-          className={cn(overallConfidence.bg, overallConfidence.color, overallConfidence.border)}
+          className={cn(overallConfidenceCalculated.bg, overallConfidenceCalculated.color, overallConfidenceCalculated.border)}
           data-testid="overall-confidence-badge"
         >
-          {getOverallIcon(overallConfidence.status)}
+          {getOverallIcon(overallConfidenceCalculated.status)}
           <span className="ml-1">
-            {overallConfidence.label}
+            {overallConfidenceCalculated.label} ({calculatedOverallScore}%)
           </span>
         </Badge>
       </div>
