@@ -95,7 +95,7 @@ export default function ChatMessage({
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Confidence Score</span>
                   <span className={getConfidenceColor(confidenceScore)}>
-                    {confidenceScore}%
+                    {confidenceScore >= 90 ? "Pass" : "Fail"}
                   </span>
                 </div>
                 <Progress value={confidenceScore} className="h-1" />
