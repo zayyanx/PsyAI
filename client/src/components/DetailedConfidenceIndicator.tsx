@@ -38,20 +38,31 @@ export default function DetailedConfidenceIndicator({
   compact = false,
   className,
 }: DetailedConfidenceProps) {
-  const getConfidenceLevel = (score: number) => {
-    if (score >= 90) return { level: "high", color: "text-success", bg: "bg-success/10", border: "border-success/20" };
-    if (score >= 70) return { level: "medium", color: "text-warning", bg: "bg-warning/10", border: "border-warning/20" };
-    return { level: "low", color: "text-destructive", bg: "bg-destructive/10", border: "border-destructive/20" };
+  const getConfidenceStatus = (score: number) => {
+    // Pass/Fail threshold at 90%
+    if (score >= 90) return { 
+      status: "pass",
+      label: "Pass", 
+      color: "text-success", 
+      bg: "bg-success/10", 
+      border: "border-success/20" 
+    };
+    return { 
+      status: "fail",
+      label: "Fail", 
+      color: "text-destructive", 
+      bg: "bg-destructive/10", 
+      border: "border-destructive/20" 
+    };
   };
 
-  const getOverallIcon = (level: string) => {
+  const getOverallIcon = (status: string) => {
     const iconSize = size === "sm" ? "h-3 w-3" : size === "lg" ? "h-5 w-5" : "h-4 w-4";
-    if (level === "high") return <CheckCircle className={iconSize} />;
-    if (level === "medium") return <AlertCircle className={iconSize} />;
+    if (status === "pass") return <CheckCircle className={iconSize} />;
     return <AlertTriangle className={iconSize} />;
   };
 
-  const overallConfidence = getConfidenceLevel(overallScore);
+  const overallConfidence = getConfidenceStatus(overallScore);
   const progressHeight = size === "sm" ? "h-1" : size === "lg" ? "h-2" : "h-1.5";
 
   const metrics: ConfidenceMetric[] = [
@@ -94,7 +105,7 @@ export default function DetailedConfidenceIndicator({
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">Overall AI Confidence</span>
         <span className={overallConfidence.color} data-testid="overall-confidence-score">
-          {overallScore}%
+          {overallConfidence.label}
         </span>
       </div>
       
@@ -106,9 +117,9 @@ export default function DetailedConfidenceIndicator({
           className={cn(overallConfidence.bg, overallConfidence.color, overallConfidence.border)}
           data-testid="overall-confidence-badge"
         >
-          {getOverallIcon(overallConfidence.level)}
+          {getOverallIcon(overallConfidence.status)}
           <span className="ml-1">
-            {overallConfidence.level.charAt(0).toUpperCase() + overallConfidence.level.slice(1)} Confidence
+            {overallConfidence.label}
           </span>
         </Badge>
       </div>
@@ -123,7 +134,7 @@ export default function DetailedConfidenceIndicator({
       {metrics.map((metric) => {
         if (metric.score === null || metric.score === undefined) return null;
         
-        const confidence = getConfidenceLevel(metric.score);
+        const confidence = getConfidenceStatus(metric.score);
         const IconComponent = metric.icon;
         
         return (
@@ -134,7 +145,7 @@ export default function DetailedConfidenceIndicator({
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">{metric.name}</span>
                   <span className={cn("text-sm font-medium", confidence.color)}>
-                    {metric.score}%
+                    {confidence.label}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
