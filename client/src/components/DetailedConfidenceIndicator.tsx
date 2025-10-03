@@ -1,4 +1,3 @@
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle, AlertCircle, Brain, Shield, Target, MessageCircle, Stethoscope } from "lucide-react";
@@ -63,7 +62,6 @@ export default function DetailedConfidenceIndicator({
   };
 
   const overallConfidence = getConfidenceStatus(overallScore);
-  const progressHeight = size === "sm" ? "h-1" : size === "lg" ? "h-2" : "h-1.5";
 
   const metrics: ConfidenceMetric[] = [
     {
@@ -121,8 +119,6 @@ export default function DetailedConfidenceIndicator({
         </span>
       </div>
       
-      <Progress value={calculatedOverallScore} className={progressHeight} data-testid="overall-confidence-progress" />
-      
       <div className="flex items-center gap-2">
         <Badge 
           variant="outline" 
@@ -150,14 +146,14 @@ export default function DetailedConfidenceIndicator({
         const IconComponent = metric.icon;
         
         return (
-          <div key={metric.name} className="space-y-2">
+          <div key={metric.name}>
             <div className="flex items-center gap-2">
               <IconComponent className="h-4 w-4 text-muted-foreground" />
               <div className="flex-1">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">{metric.name}</span>
                   <span className={cn("text-sm font-medium", confidence.color)}>
-                    {confidence.label}
+                    {confidence.label} ({metric.score}%)
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -165,11 +161,6 @@ export default function DetailedConfidenceIndicator({
                 </p>
               </div>
             </div>
-            <Progress 
-              value={metric.score} 
-              className={progressHeight}
-              data-testid={`progress-${metric.name.toLowerCase().replace(' ', '-')}`}
-            />
           </div>
         );
       })}
