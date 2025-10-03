@@ -83,7 +83,7 @@ export class MemStorage implements IStorage {
       patientId: 'patient-1',
       title: 'Work-related anxiety support',
       status: 'pending_review',
-      confidenceScore: 73,
+      confidenceScore: 20, // 1 out of 5 metrics pass (only Safety Assessment >= 90%)
       avgDecisionAlignment: 75,
       avgClinicalAccuracy: 82,
       avgSafetyAssessment: 90,
@@ -104,7 +104,7 @@ export class MemStorage implements IStorage {
       patientId: 'patient-1',
       title: 'Panic attack management',
       status: 'reviewed',
-      confidenceScore: 28,
+      confidenceScore: 0, // 0 out of 5 metrics pass
       avgDecisionAlignment: 35,
       avgClinicalAccuracy: 42,
       avgSafetyAssessment: 65,
@@ -145,7 +145,7 @@ export class MemStorage implements IStorage {
         conversationId: 'conv-1',
         sender: 'ai',
         content: 'It sounds like you\'re experiencing perfectionism-related anxiety, which often stems from fear of disappointment or criticism. This is a very treatable condition. Let me suggest some cognitive behavioral techniques that can help you manage these thoughts and reduce the physical symptoms of anxiety.',
-        confidenceScore: 73,
+        confidenceScore: 20, // 1 out of 5 metrics pass (only Safety Assessment >= 90%)
         decisionAlignment: 75,
         clinicalAccuracy: 82,
         safetyAssessment: 90,
@@ -175,7 +175,7 @@ export class MemStorage implements IStorage {
         conversationId: 'conv-2',
         sender: 'ai',
         content: 'I understand this must be very distressing. Panic attacks are a treatable condition. Let me guide you through some immediate coping techniques and then we can work on longer-term strategies.',
-        confidenceScore: 28,
+        confidenceScore: 0, // 0 out of 5 metrics pass
         decisionAlignment: 35,
         clinicalAccuracy: 42,
         safetyAssessment: 65,
@@ -246,7 +246,7 @@ export class MemStorage implements IStorage {
 
   async createConversation(conversation: InsertConversation): Promise<Conversation> {
     const id = randomUUID();
-    // Generate realistic detailed confidence scores that add up to a reasonable overall score
+    // Generate realistic detailed confidence scores
     const detailedScores = {
       avgDecisionAlignment: Math.floor(Math.random() * 40) + 60, // 60-99%
       avgClinicalAccuracy: Math.floor(Math.random() * 30) + 70, // 70-99%  
@@ -255,14 +255,16 @@ export class MemStorage implements IStorage {
       avgResponseAppropriateness: Math.floor(Math.random() * 40) + 60, // 60-99%
     };
     
-    // Calculate overall score as weighted average of detailed scores
-    const overallScore = Math.floor(
-      (detailedScores.avgDecisionAlignment * 0.2 +
-       detailedScores.avgClinicalAccuracy * 0.25 +
-       detailedScores.avgSafetyAssessment * 0.25 +
-       detailedScores.avgContextUnderstanding * 0.15 +
-       detailedScores.avgResponseAppropriateness * 0.15)
-    );
+    // Calculate overall score as percentage of metrics that pass (>= 90%)
+    const scores = [
+      detailedScores.avgDecisionAlignment,
+      detailedScores.avgClinicalAccuracy,
+      detailedScores.avgSafetyAssessment,
+      detailedScores.avgContextUnderstanding,
+      detailedScores.avgResponseAppropriateness
+    ];
+    const passingMetrics = scores.filter(score => score >= 90).length;
+    const overallScore = Math.round((passingMetrics / scores.length) * 100);
     
     const newConversation: Conversation = {
       ...conversation,
