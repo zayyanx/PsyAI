@@ -1,4 +1,3 @@
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, CheckCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -43,18 +42,15 @@ export default function ConfidenceIndicator({
   };
 
   const confidence = getConfidenceStatus(score);
-  const progressHeight = size === "sm" ? "h-1" : size === "lg" ? "h-2" : "h-1.5";
 
   return (
     <div className={cn("space-y-2", className)} data-testid="confidence-indicator">
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">AI Confidence</span>
         <span className={confidence.color} data-testid="confidence-score">
-          {confidence.label}
+          {confidence.label} ({score}%)
         </span>
       </div>
-      
-      <Progress value={score} className={progressHeight} data-testid="confidence-progress" />
       
       {showBadge && (
         <div className="flex items-center gap-2">
@@ -65,7 +61,7 @@ export default function ConfidenceIndicator({
           >
             {showIcon && getIcon(confidence.status)}
             <span className={showIcon ? "ml-1" : ""}>
-              {confidence.label}
+              {confidence.label} ({score}%)
             </span>
           </Badge>
         </div>
