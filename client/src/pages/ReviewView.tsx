@@ -116,9 +116,8 @@ export default function ReviewView() {
   };
 
   const getConfidenceBadge = (score: number) => {
-    if (score >= 90) return <Badge variant="outline" className="bg-success/10 text-success border-success/20">High Confidence</Badge>;
-    if (score >= 70) return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Medium Confidence</Badge>;
-    return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">Low Confidence</Badge>;
+    if (score >= 90) return <Badge variant="outline" className="bg-success/10 text-success border-success/20">Pass ({score}%)</Badge>;
+    return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">Fail ({score}%)</Badge>;
   };
 
   return (

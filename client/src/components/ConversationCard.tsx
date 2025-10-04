@@ -4,7 +4,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Clock, AlertTriangle, CheckCircle, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
-import ConfidenceIndicator from "./ConfidenceIndicator";
 
 export interface ConversationCardProps {
   id: string;
@@ -79,14 +78,19 @@ export default function ConversationCard({
         return null;
     }
   };
-
-  const shouldHighlight = needsExpertReview || needsNurseReview || needsDoctorReview || escalatedToDoctor || confidenceScore < 90;
+  
+  // Color-coded left border based on confidence score
+  const getConfidenceBorderColor = () => {
+    if (confidenceScore < 60) return "border-l-4 border-l-destructive";
+    if (confidenceScore < 90) return "border-l-4 border-l-warning";
+    return "";
+  };
 
   return (
     <Card 
       className={cn(
         "hover-elevate transition-all duration-200",
-        shouldHighlight && "ring-2 ring-warning/20 border-warning/30",
+        getConfidenceBorderColor(),
         className
       )}
       data-testid={`conversation-card-${id}`}
@@ -119,19 +123,10 @@ export default function ConversationCard({
           
           <div className="flex flex-col items-end gap-2">
             {getStatusBadge()}
-            {(needsNurseReview || needsExpertReview) && (
+            {(needsNurseReview || needsExpertReview || needsDoctorReview || escalatedToDoctor) && (
               <Badge variant="outline" className="bg-chart-2/10 text-chart-2 border-chart-2/20 text-xs">
-                Nurse Review Needed
-              </Badge>
-            )}
-            {needsDoctorReview && (
-              <Badge variant="outline" className="bg-medical-blue/10 text-medical-blue border-medical-blue/20 text-xs">
-                Doctor Review Needed
-              </Badge>
-            )}
-            {escalatedToDoctor && (
-              <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20 text-xs">
-                Escalated to Doctor
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                Review Required
               </Badge>
             )}
           </div>
@@ -139,18 +134,23 @@ export default function ConversationCard({
       </CardHeader>
       
       <CardContent className="pt-0 space-y-4">
-        <div>
-          <p className="text-sm text-muted-foreground line-clamp-2" data-testid="last-message">
-            {lastMessage}
-          </p>
+        {/* Prominent Confidence Score Display */}
+        <div className="flex items-center justify-between p-3 bg-muted/30 rounded-md">
+          <span className="text-sm font-medium text-muted-foreground">AI Confidence</span>
+          <div className="flex items-center gap-2">
+            {confidenceScore >= 90 ? (
+              <CheckCircle className="h-5 w-5 text-success" />
+            ) : (
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+            )}
+            <span className={cn(
+              "text-xl font-bold",
+              confidenceScore >= 90 ? "text-success" : "text-destructive"
+            )} data-testid="confidence-score">
+              {confidenceScore >= 90 ? "Pass" : "Fail"} ({confidenceScore}%)
+            </span>
+          </div>
         </div>
-        
-        <ConfidenceIndicator 
-          score={confidenceScore} 
-          size="sm" 
-          showIcon={false} 
-          className="!space-y-1"
-        />
         
         <div className="flex gap-2 pt-2">
           <Button 

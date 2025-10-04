@@ -63,12 +63,13 @@ export default function DetailedConfidenceIndicator({
 
   const overallConfidence = getConfidenceStatus(overallScore);
 
+  // Show only 3 most critical metrics to reduce cognitive load
   const metrics: ConfidenceMetric[] = [
     {
-      name: "Decision Alignment",
-      score: decisionAlignment ?? null,
-      description: "Alignment with clinical protocols and guidelines",
-      icon: Target,
+      name: "Safety Assessment",
+      score: safetyAssessment ?? null, 
+      description: "Safety of recommendations and risk management",
+      icon: Shield,
     },
     {
       name: "Clinical Accuracy", 
@@ -77,45 +78,25 @@ export default function DetailedConfidenceIndicator({
       icon: Stethoscope,
     },
     {
-      name: "Safety Assessment",
-      score: safetyAssessment ?? null, 
-      description: "Safety of recommendations and risk management",
-      icon: Shield,
-    },
-    {
-      name: "Context Understanding",
-      score: contextUnderstanding ?? null,
-      description: "AI's comprehension of patient situation",
-      icon: Brain,
-    },
-    {
-      name: "Response Appropriateness",
-      score: responseAppropriateness ?? null,
-      description: "Tone, empathy, and communication suitability",
-      icon: MessageCircle,
+      name: "Decision Alignment",
+      score: decisionAlignment ?? null,
+      description: "Alignment with clinical protocols and guidelines",
+      icon: Target,
     },
   ];
 
   const hasDetailedScores = metrics.some(metric => metric.score !== null && metric.score !== undefined);
 
-  // Calculate overall score as percentage of metrics that pass (score >= 90%)
-  const calculateOverallScore = () => {
-    const validMetrics = metrics.filter(m => m.score !== null && m.score !== undefined);
-    if (validMetrics.length === 0) return overallScore; // Fallback to provided score
-    
-    const passingMetrics = validMetrics.filter(m => m.score! >= 90).length;
-    return Math.round((passingMetrics / validMetrics.length) * 100);
-  };
-
-  const calculatedOverallScore = hasDetailedScores ? calculateOverallScore() : overallScore;
-  const overallConfidenceCalculated = getConfidenceStatus(calculatedOverallScore);
+  // Always use the provided overall score for consistency across views
+  // The overall score should be calculated at the data source level, not here
+  const overallConfidenceCalculated = getConfidenceStatus(overallScore);
 
   const overallContent = showOverall && (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">Overall AI Confidence</span>
         <span className={overallConfidenceCalculated.color} data-testid="overall-confidence-score">
-          {overallConfidenceCalculated.label} ({calculatedOverallScore}%)
+          {overallConfidenceCalculated.label} ({overallScore}%)
         </span>
       </div>
       
@@ -127,7 +108,7 @@ export default function DetailedConfidenceIndicator({
         >
           {getOverallIcon(overallConfidenceCalculated.status)}
           <span className="ml-1">
-            {overallConfidenceCalculated.label} ({calculatedOverallScore}%)
+            {overallConfidenceCalculated.label} ({overallScore}%)
           </span>
         </Badge>
       </div>
