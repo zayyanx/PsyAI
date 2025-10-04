@@ -130,7 +130,7 @@ export default function ConversationCard({
           variant="outline"
           size="sm"
           className={cn(
-            "w-full justify-between",
+            "w-fit",
             confidenceScore >= 90 
               ? "bg-success/10 text-success border-success/20" 
               : "bg-destructive/10 text-destructive border-destructive/20"
