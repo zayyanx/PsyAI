@@ -134,7 +134,7 @@ export default function DetailedConfidenceIndicator({
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">{metric.name}</span>
                   <span className={cn("text-sm font-medium", confidence.color)}>
-                    {confidence.label} ({metric.score}%)
+                    {confidence.label}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
