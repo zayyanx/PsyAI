@@ -1,42 +1,83 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import PatientChatInterface from '@/components/PatientChatInterface';
 import { type ChatMessageProps } from '@/components/ChatMessage';
+
+// Fixed conversation ID for this demo - in production, this would be dynamic per patient
+const CONVERSATION_ID = 'conv-1';
 
 export default function PatientChat() {
   const [isTyping, setIsTyping] = useState(false);
   const [messages, setMessages] = useState<ChatMessageProps[]>([
     {
-      id: '1',
+      id: 'welcome-msg',
       sender: 'ai',
-      content: 'Hello! I\'m your AI mental health assistant. I\'m here to provide personalized support and guidance, with expert oversight to ensure you receive the best care possible. How are you feeling today?',
+      content: 'Hello! I\'m Pimm, your AI mental health assistant. I\'m here to provide supportive therapeutic conversations with expert oversight to ensure you receive quality care. How are you feeling today?',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
 
-  // Mock AI responses for demo
-  const aiResponses = [
-    {
-      content: 'Thank you for sharing that with me. It\'s completely normal to feel this way, and I\'m here to help. Can you tell me more about what specific situations trigger these feelings?',
-      confidence: 85,
-    },
-    {
-      content: 'I understand how challenging that must be. Let\'s work together on some coping strategies. First, let\'s try a simple breathing exercise that you can use whenever you feel overwhelmed.',
-      confidence: 94,
-    },
-    {
-      content: 'I\'m here to support you through this difficult time. Remember that seeking help is a sign of strength, not weakness. Would you like me to provide some immediate coping strategies while we work on a longer-term plan?',
-      confidence: 91,
-    },
-    {
-      content: 'These feelings are completely valid. Let\'s focus on some grounding techniques that can help you feel more centered when you\'re overwhelmed.',
-      confidence: 93,
-    },
-  ];
+  // Fetch existing messages when component loads
+  const { data: existingMessages } = useQuery({
+    queryKey: ['/api/conversations', CONVERSATION_ID, 'messages'],
+    queryFn: () => fetch(`/api/conversations/${CONVERSATION_ID}/messages`).then(r => r.json()),
+  });
 
-  const handleSendMessage = (content: string) => {
-    console.log('Sending message:', content);
+  // Load existing messages into state
+  useEffect(() => {
+    if (existingMessages && existingMessages.length > 0) {
+      const formattedMessages: ChatMessageProps[] = existingMessages.map((msg: any) => ({
+        id: msg.id,
+        sender: msg.sender,
+        content: msg.content,
+        timestamp: new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      }));
+      setMessages(formattedMessages);
+    }
+  }, [existingMessages]);
+
+  // Mutation to send messages to AI
+  const chatMutation = useMutation({
+    mutationFn: async (message: string) => {
+      const response = await apiRequest('POST', `/api/conversations/${CONVERSATION_ID}/chat`, { message });
+      return response.json();
+    },
+    onSuccess: (data: any) => {
+      // Add AI response to messages
+      const aiMessage: ChatMessageProps = {
+        id: data.aiMessage.id,
+        sender: 'ai',
+        content: data.aiMessage.content,
+        timestamp: new Date(data.aiMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+      setIsTyping(false);
+      
+      // Invalidate queries to refresh conversation data
+      queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/conversations', CONVERSATION_ID, 'messages'] });
+    },
+    onError: (error) => {
+      console.error('Error sending message:', error);
+      setIsTyping(false);
+      
+      // Show error message to user
+      const errorMessage: ChatMessageProps = {
+        id: Date.now().toString(),
+        sender: 'ai',
+        content: 'I\'m having trouble processing your message right now. Please try again or reach out to a mental health professional if you need immediate support.',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    },
+  });
+
+  const handleSendMessage = async (content: string) => {
+    console.log('Sending message to AI:', content);
     
-    // Add patient message
+    // Add patient message immediately
     const patientMessage: ChatMessageProps = {
       id: Date.now().toString(),
       sender: 'patient',
@@ -47,23 +88,8 @@ export default function PatientChat() {
     setMessages(prev => [...prev, patientMessage]);
     setIsTyping(true);
     
-    // Simulate AI response with random delay and response
-    setTimeout(() => {
-      const randomResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)];
-      // For patient view, only show responses with 90%+ confidence
-      // Lower confidence responses would be escalated to experts first
-      const aiResponse: ChatMessageProps = {
-        id: (Date.now() + 1).toString(),
-        sender: 'ai',
-        content: randomResponse.confidence >= 90 ? randomResponse.content : 
-          'Let me provide you with some general guidance while I consult with our expert team for more personalized recommendations.',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        // Don't include confidence scores for patient view
-      };
-      
-      setMessages(prev => [...prev, aiResponse]);
-      setIsTyping(false);
-    }, 1500 + Math.random() * 2000);
+    // Send to AI via LangGraph
+    await chatMutation.mutateAsync(content);
   };
 
   return (

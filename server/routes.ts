@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertMedicalReviewSchema } from "@shared/schema";
+import { processPatientMessage } from "./ai";
+import { HumanMessage, AIMessage } from "@langchain/core/messages";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Conversations API
@@ -45,6 +47,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(messages);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+
+  // AI Chat API - Process patient messages through LangGraph
+  app.post("/api/conversations/:id/chat", async (req, res) => {
+    try {
+      const conversationId = req.params.id;
+      const { message: patientMessage } = req.body;
+
+      if (!patientMessage || typeof patientMessage !== 'string') {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      // Get conversation and existing messages for context
+      const conversation = await storage.getConversation(conversationId);
+      if (!conversation) {
+        return res.status(404).json({ error: "Conversation not found" });
+      }
+
+      const existingMessages = await storage.getConversationMessages(conversationId);
+      
+      // Convert existing messages to LangChain format for context
+      const chatHistory = existingMessages.map(msg => 
+        msg.sender === 'patient' 
+          ? new HumanMessage(msg.content)
+          : new AIMessage(msg.content)
+      );
+
+      // Process through LangGraph
+      const result = await processPatientMessage(
+        conversationId,
+        patientMessage,
+        chatHistory
+      );
+
+      // Save patient message
+      const patientMsg = await storage.createMessage({
+        conversationId,
+        sender: 'patient',
+        content: patientMessage,
+        confidenceScore: null,
+        decisionAlignment: null,
+        clinicalAccuracy: null,
+        safetyAssessment: null,
+        contextUnderstanding: null,
+        responseAppropriateness: null,
+        nurseAnnotation: null,
+        doctorAnnotation: null,
+      });
+
+      // Save AI response with confidence metrics
+      const assessment = result.confidenceAssessment;
+      const metrics = assessment?.metrics || [];
+      
+      // Map metrics by name to avoid ordering issues
+      const getMetricScore = (name: string) => {
+        const metric = metrics.find(m => m.name.toLowerCase().includes(name.toLowerCase()));
+        return metric?.passed ? 90 : 80;
+      };
+      
+      const aiMsg = await storage.createMessage({
+        conversationId,
+        sender: 'ai',
+        content: result.aiResponse,
+        confidenceScore: assessment?.overallScore || 0,
+        // Map metrics by name for reliability
+        decisionAlignment: getMetricScore('empathy'),
+        clinicalAccuracy: getMetricScore('safety'),
+        safetyAssessment: getMetricScore('clarity'),
+        contextUnderstanding: getMetricScore('actionability'),
+        responseAppropriateness: getMetricScore('boundaries'),
+        nurseAnnotation: assessment?.summary || null,
+        doctorAnnotation: null,
+      });
+
+      // Update conversation with latest confidence score and review flags
+      const needsReview = assessment?.needsExpertReview || (assessment?.overallScore ?? 0) < 90;
+      const escalationNeeded = assessment?.escalationRequired || result.crisisDetected;
+
+      await storage.updateConversation(conversationId, {
+        confidenceScore: assessment?.overallScore || 0,
+        needsNurseReview: needsReview,
+        needsDoctorReview: escalationNeeded,
+        status: needsReview ? 'pending_review' : 'active',
+        updatedAt: new Date(),
+      });
+
+      res.json({
+        patientMessage: patientMsg,
+        aiMessage: aiMsg,
+        confidenceAssessment: assessment,
+        crisisDetected: result.crisisDetected,
+      });
+    } catch (error) {
+      console.error("Error processing chat message:", error);
+      res.status(500).json({ error: "Failed to process message" });
     }
   });
 

@@ -10,6 +10,47 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (October 2025)
 
+### LangChain & LangGraph AI Implementation
+Implemented a comprehensive AI service layer using LangChain and LangGraph for therapeutic conversations:
+
+1. **AI Service Architecture (server/ai/)**:
+   - **LangChain Integration**: Using gpt-5 via Replit AI Integrations (no API key needed)
+   - **Therapeutic Prompts**: System prompts designed for empathetic mental health support
+   - **Confidence Scoring**: 5-metric evaluation system (Empathy, Safety, Clarity, Actionability, Boundaries)
+   - **LangGraph State Machine**: Handles conversation flow with crisis detection and safety routing
+
+2. **Confidence Assessment System**:
+   - Binary pass/fail evaluation at 90% threshold per metric
+   - Overall score calculated as (passing metrics / total metrics) × 100
+   - Structured outputs using Zod schemas for reliability
+   - Temperature 0 for deterministic safety assessments
+
+3. **Crisis Detection & Safety**:
+   - Keyword-based crisis detection (suicide, self-harm, harm to others)
+   - Automatic crisis response with emergency resources
+   - Escalation flags for nurse and doctor review
+   - Expert review triggered when confidence < 90%
+
+4. **Backend Integration**:
+   - POST `/api/conversations/:id/chat` endpoint for AI conversations
+   - Saves messages with detailed confidence metrics
+   - Updates conversation status based on safety assessment
+   - Metric mapping by name (not index) for reliability
+
+5. **Frontend Integration**:
+   - Real-time AI chat in PatientChat component
+   - Loads existing conversation history
+   - React Query for state management
+   - Proper error handling and loading states
+
+6. **Technical Details**:
+   - Models: gpt-5 (conversation) and gpt-5 temp=0 (scoring)
+   - State management: LangGraph with typed state annotations
+   - Validation: Zod schemas for structured outputs
+   - Safety: Multiple layers of crisis detection and escalation
+
+## Recent Changes (October 2025)
+
 ### UI Simplification and Confidence-First Design
 Updated the expert dashboard interface to prioritize confidence scores and streamline navigation:
 

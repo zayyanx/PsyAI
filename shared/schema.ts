@@ -87,6 +87,13 @@ export const insertMessageSchema = createInsertSchema(messages).pick({
   sender: true,
   content: true,
   confidenceScore: true,
+  decisionAlignment: true,
+  clinicalAccuracy: true,
+  safetyAssessment: true,
+  contextUnderstanding: true,
+  responseAppropriateness: true,
+  nurseAnnotation: true,
+  doctorAnnotation: true,
 });
 
 export const insertMedicalReviewSchema = createInsertSchema(medicalReviews).pick({
