@@ -199,37 +199,45 @@ def main():
                 elif len(options) < 2:
                     st.error("Please provide at least 2 options")
                 else:
-                    # Get workflow app
-                    workflow_app = get_workflow_app()
-                    
-                    # Initialize state
-                    initial_state = {
-                        "scenario": scenario,
-                        "options": options,
-                        "model_prediction": "",
-                        "confidence": 0.0,
-                        "human_decision": "",
-                        "human_approved": False,
-                        "timestamp": "",
-                        "status": "initialized"
-                    }
-                    
-                    # Generate thread ID
-                    thread_id = f"decision_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                    st.session_state.current_thread_id = thread_id
-                    config = {"configurable": {"thread_id": thread_id}}
-                    
-                    # Run workflow until interrupt
-                    with st.spinner("AI is analyzing your scenario..."):
-                        result = None
-                        for event in workflow_app.stream(initial_state, config):
-                            for node_name, node_state in event.items():
-                                result = node_state
+                    try:
+                        # Get workflow app
+                        workflow_app = get_workflow_app()
                         
-                        st.session_state.workflow_state = result
-                    
-                    st.success("✅ AI prediction ready! Switch to 'Review Prediction' tab.")
-                    st.rerun()
+                        # Initialize state
+                        initial_state = {
+                            "scenario": scenario,
+                            "options": options,
+                            "model_prediction": "",
+                            "confidence": 0.0,
+                            "human_decision": "",
+                            "human_approved": False,
+                            "timestamp": "",
+                            "status": "initialized"
+                        }
+                        
+                        # Generate thread ID
+                        thread_id = f"decision_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                        st.session_state.current_thread_id = thread_id
+                        config = {"configurable": {"thread_id": thread_id}}
+                        
+                        # Run workflow until interrupt
+                        with st.spinner("AI is analyzing your scenario..."):
+                            result = None
+                            for event in workflow_app.stream(initial_state, config):
+                                for node_name, node_state in event.items():
+                                    result = node_state
+                            
+                            if result is None:
+                                st.error("❌ Workflow did not produce any result. Please try again.")
+                            else:
+                                st.session_state.workflow_state = result
+                                st.success("✅ AI prediction ready! Switch to 'Review Prediction' tab.")
+                                st.rerun()
+                    except Exception as e:
+                        st.error(f"❌ Error during prediction: {str(e)}")
+                        print(f"ERROR: Exception during workflow execution: {e}")
+                        import traceback
+                        traceback.print_exc()
     
     with tab2:
         st.header("Review AI Prediction")
