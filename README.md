@@ -13,6 +13,6 @@ Currently, the team has slots open for additional members, contributors, and adv
 
 ## High-Level Design
 
-<img width="1620" height="914" alt="PsyAI High Level Design - Medical Context" src="https://github.com/user-attachments/assets/3a9e7e37-8e7d-497c-b077-fb2936c6d907" />
+<img width="1620" height="914" alt="PsyAI High Level Design - Medical Context" src="https://github.com/zayyanx/PsyAI/blob/27d95f31116c7c87fac56084f686fb5f4721c850/Screenshot%202025-11-08%20at%205.44.25%20PM.png"/>
 
 The ultimate goal of this project is to achieve seamless AI to Human conversations attuned on a subconscious level based on foundational components of human cognition.
