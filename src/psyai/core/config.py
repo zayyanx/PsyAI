@@ -51,9 +51,15 @@ class Settings(BaseSettings):
         description="Database connection URL",
     )
     database_echo: bool = Field(default=False, description="Echo SQL queries")
+    database_pool_size: int = Field(default=5, description="Database connection pool size")
+    database_max_overflow: int = Field(default=10, description="Max connections beyond pool size")
 
     # Redis Configuration
     redis_url: str = Field(default="redis://localhost:6379/0", description="Redis connection URL")
+    redis_host: str = Field(default="localhost", description="Redis host")
+    redis_port: int = Field(default=6379, description="Redis port")
+    redis_db: int = Field(default=0, description="Redis database number")
+    redis_password: Optional[str] = Field(default=None, description="Redis password")
     redis_max_connections: int = Field(default=10, description="Max Redis connections")
 
     # LangChain Configuration
