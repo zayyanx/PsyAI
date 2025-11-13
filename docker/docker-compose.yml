@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: psyai-postgres
+    environment:
+      POSTGRES_DB: psyai_db
+      POSTGRES_USER: psyai_user
+      POSTGRES_PASSWORD: psyai_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U psyai_user -d psyai_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - psyai-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: psyai-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - psyai-network
+
+  # Weaviate Vector Database (optional)
+  weaviate:
+    image: semitechnologies/weaviate:latest
+    container_name: psyai-weaviate
+    ports:
+      - "8080:8080"
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      DEFAULT_VECTORIZER_MODULE: 'none'
+      CLUSTER_HOSTNAME: 'node1'
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    networks:
+      - psyai-network
+
+  # PsyAI API (uncomment after platform is built)
+  # api:
+  #   build:
+  #     context: ..
+  #     dockerfile: docker/Dockerfile
+  #   container_name: psyai-api
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - DATABASE_URL=postgresql://psyai_user:psyai_password@postgres:5432/psyai_db
+  #     - REDIS_URL=redis://redis:6379/0
+  #   env_file:
+  #     - ../.env
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ../src:/app/src
+  #     - ../logs:/app/logs
+  #   command: uvicorn psyai.platform.api.app:app --host 0.0.0.0 --port 8000 --reload
+  #   networks:
+  #     - psyai-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  weaviate_data:
+    driver: local
+
+networks:
+  psyai-network:
+    driver: bridge
