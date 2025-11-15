@@ -29,6 +29,7 @@ class Settings(BaseSettings):
 
     # Application Settings
     app_name: str = Field(default="PsyAI", description="Application name")
+    app_version: str = Field(default="0.1.0", description="Application version")
     app_env: str = Field(default="development", description="Environment: development, staging, production")
     app_debug: bool = Field(default=True, description="Debug mode")
     log_level: str = Field(default="INFO", description="Logging level")
@@ -50,9 +51,15 @@ class Settings(BaseSettings):
         description="Database connection URL",
     )
     database_echo: bool = Field(default=False, description="Echo SQL queries")
+    database_pool_size: int = Field(default=5, description="Database connection pool size")
+    database_max_overflow: int = Field(default=10, description="Max connections beyond pool size")
 
     # Redis Configuration
     redis_url: str = Field(default="redis://localhost:6379/0", description="Redis connection URL")
+    redis_host: str = Field(default="localhost", description="Redis host")
+    redis_port: int = Field(default=6379, description="Redis port")
+    redis_db: int = Field(default=0, description="Redis database number")
+    redis_password: Optional[str] = Field(default=None, description="Redis password")
     redis_max_connections: int = Field(default=10, description="Max Redis connections")
 
     # LangChain Configuration
@@ -75,8 +82,8 @@ class Settings(BaseSettings):
     langsmith_tracing: bool = Field(default=True, description="Enable LangSmith tracing")
 
     # Centaur Model Configuration
-    centaur_api_url: Optional[str] = Field(default=None, description="Centaur API URL")
     centaur_api_key: Optional[str] = Field(default=None, description="Centaur API key")
+    centaur_base_url: Optional[str] = Field(default=None, description="Centaur API base URL")
     centaur_model_version: str = Field(default="v1", description="Centaur model version")
     centaur_timeout: int = Field(default=30, description="Centaur API timeout")
     centaur_max_retries: int = Field(default=3, description="Max retries for Centaur API")
