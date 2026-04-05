@@ -30,7 +30,9 @@ class Settings(BaseSettings):
     # Application Settings
     app_name: str = Field(default="PsyAI", description="Application name")
     app_version: str = Field(default="0.1.0", description="Application version")
-    app_env: str = Field(default="development", description="Environment: development, staging, production")
+    app_env: str = Field(
+        default="development", description="Environment: development, staging, production"
+    )
     app_debug: bool = Field(default=True, description="Debug mode")
     log_level: str = Field(default="INFO", description="Logging level")
 
@@ -41,7 +43,9 @@ class Settings(BaseSettings):
     api_workers: int = Field(default=1, description="Number of workers")
 
     # Security
-    secret_key: str = Field(default="your-secret-key-change-in-production", description="Secret key for JWT")
+    secret_key: str = Field(
+        default="your-secret-key-change-in-production", description="Secret key for JWT"
+    )
     algorithm: str = Field(default="HS256", description="JWT algorithm")
     access_token_expire_minutes: int = Field(default=30, description="Access token expiration")
 
@@ -65,7 +69,9 @@ class Settings(BaseSettings):
     # Google Cloud / Vertex AI Configuration
     gcp_project_id: Optional[str] = Field(default=None, description="GCP Project ID")
     gcp_location: str = Field(default="us-central1", description="GCP Location/Region")
-    gcp_credentials_path: Optional[str] = Field(default=None, description="Path to GCP service account JSON")
+    gcp_credentials_path: Optional[str] = Field(
+        default=None, description="Path to GCP service account JSON"
+    )
 
     # Vertex AI Model Configuration
     vertex_model: str = Field(default="gemini-1.5-pro", description="Vertex AI model name")
@@ -76,8 +82,7 @@ class Settings(BaseSettings):
 
     # Vertex AI Embeddings Configuration
     vertex_embedding_model: str = Field(
-        default="text-embedding-004",
-        description="Vertex AI embedding model"
+        default="text-embedding-004", description="Vertex AI embedding model"
     )
     vertex_embedding_dimension: int = Field(default=768, description="Embedding dimension")
 
@@ -85,7 +90,7 @@ class Settings(BaseSettings):
     vertex_eval_enabled: bool = Field(default=True, description="Enable Vertex AI evaluation")
     vertex_eval_metrics: List[str] = Field(
         default=["coherence", "fluency", "safety", "groundedness"],
-        description="Vertex AI evaluation metrics"
+        description="Vertex AI evaluation metrics",
     )
 
     # Centaur Model Configuration
@@ -97,17 +102,22 @@ class Settings(BaseSettings):
 
     # Vector Database Configuration
     vector_db_type: str = Field(
-        default="vertex-vector-search",
-        description="Vector DB type: vertex-vector-search, chroma"
+        default="vertex-vector-search", description="Vector DB type: vertex-vector-search, chroma"
     )
 
     # Vertex AI Vector Search
-    vertex_index_id: Optional[str] = Field(default=None, description="Vertex Vector Search index ID")
-    vertex_index_endpoint_id: Optional[str] = Field(default=None, description="Vertex Vector Search endpoint ID")
+    vertex_index_id: Optional[str] = Field(
+        default=None, description="Vertex Vector Search index ID"
+    )
+    vertex_index_endpoint_id: Optional[str] = Field(
+        default=None, description="Vertex Vector Search endpoint ID"
+    )
     vertex_deployed_index_id: Optional[str] = Field(default=None, description="Deployed index ID")
 
     # Chroma (for backward compatibility)
-    chroma_persist_directory: str = Field(default="./chroma_db", description="Chroma persistence directory")
+    chroma_persist_directory: str = Field(
+        default="./chroma_db", description="Chroma persistence directory"
+    )
 
     # Embedding Configuration
     embedding_model: str = Field(
@@ -129,7 +139,9 @@ class Settings(BaseSettings):
 
     # Human-in-the-Loop Configuration
     hitl_enabled: bool = Field(default=True, description="Enable HITL")
-    hitl_notification_email: Optional[str] = Field(default=None, description="HITL notification email")
+    hitl_notification_email: Optional[str] = Field(
+        default=None, description="HITL notification email"
+    )
     hitl_notification_webhook: Optional[str] = Field(default=None, description="HITL webhook URL")
     hitl_auto_assign: bool = Field(default=True, description="Auto-assign reviews")
 

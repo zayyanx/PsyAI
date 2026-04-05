@@ -424,6 +424,7 @@ class AlignmentPrediction:
 
 # Utility functions
 
+
 async def quick_confidence_check(
     ai_response: str,
     context: str,

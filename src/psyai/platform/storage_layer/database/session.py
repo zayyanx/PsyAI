@@ -51,7 +51,9 @@ def create_database_engine(
 
     logger.info(
         "creating_database_engine",
-        database_url=database_url.split("@")[-1] if "@" in database_url else database_url,  # Hide credentials
+        database_url=(
+            database_url.split("@")[-1] if "@" in database_url else database_url
+        ),  # Hide credentials
         pool_size=pool_size,
         max_overflow=max_overflow,
     )

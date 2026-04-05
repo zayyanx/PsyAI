@@ -65,7 +65,9 @@ def censor_sensitive_data(logger: Any, method_name: str, event_dict: EventDict) 
             elif isinstance(value, dict):
                 result[key] = _censor_dict(value)
             elif isinstance(value, list):
-                result[key] = [_censor_dict(item) if isinstance(item, dict) else item for item in value]
+                result[key] = [
+                    _censor_dict(item) if isinstance(item, dict) else item for item in value
+                ]
             else:
                 result[key] = value
         return result
