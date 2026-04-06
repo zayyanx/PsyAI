@@ -83,7 +83,11 @@ class DatabaseError(PsyAIException):
 class DatabaseConnectionError(DatabaseError):
     """Exception raised when database connection fails."""
 
-    def __init__(self, message: str = "Failed to connect to database", details: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        message: str = "Failed to connect to database",
+        details: Optional[Dict[str, Any]] = None,
+    ):
         super().__init__(message, details=details)
         self.code = "DATABASE_CONNECTION_ERROR"
 
@@ -102,7 +106,9 @@ class RecordNotFoundError(DatabaseError):
 class DuplicateRecordError(DatabaseError):
     """Exception raised when attempting to create a duplicate record."""
 
-    def __init__(self, resource: str, field: str, value: Any, details: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self, resource: str, field: str, value: Any, details: Optional[Dict[str, Any]] = None
+    ):
         message = f"Duplicate {resource}: {field}={value} already exists"
         super().__init__(message, details=details)
         self.code = "DUPLICATE_RECORD"
@@ -125,7 +131,9 @@ class APIError(PsyAIException):
 class AuthenticationError(APIError):
     """Exception raised for authentication failures."""
 
-    def __init__(self, message: str = "Authentication failed", details: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self, message: str = "Authentication failed", details: Optional[Dict[str, Any]] = None
+    ):
         super().__init__(message, status_code=401, details=details)
         self.code = "AUTHENTICATION_ERROR"
 
@@ -133,7 +141,9 @@ class AuthenticationError(APIError):
 class AuthorizationError(APIError):
     """Exception raised for authorization failures."""
 
-    def __init__(self, message: str = "Insufficient permissions", details: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self, message: str = "Insufficient permissions", details: Optional[Dict[str, Any]] = None
+    ):
         super().__init__(message, status_code=403, details=details)
         self.code = "AUTHORIZATION_ERROR"
 
@@ -163,7 +173,9 @@ class LLMError(PsyAIException):
 class LLMTimeoutError(LLMError):
     """Exception raised when LLM request times out."""
 
-    def __init__(self, message: str = "LLM request timed out", details: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self, message: str = "LLM request timed out", details: Optional[Dict[str, Any]] = None
+    ):
         super().__init__(message, details=details)
         self.code = "LLM_TIMEOUT"
 
@@ -171,7 +183,9 @@ class LLMTimeoutError(LLMError):
 class LLMRateLimitError(LLMError):
     """Exception raised when LLM rate limit is hit."""
 
-    def __init__(self, message: str = "LLM rate limit exceeded", details: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self, message: str = "LLM rate limit exceeded", details: Optional[Dict[str, Any]] = None
+    ):
         super().__init__(message, details=details)
         self.code = "LLM_RATE_LIMIT"
 
@@ -179,7 +193,9 @@ class LLMRateLimitError(LLMError):
 class LLMInvalidResponseError(LLMError):
     """Exception raised when LLM returns invalid response."""
 
-    def __init__(self, message: str = "Invalid LLM response", details: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self, message: str = "Invalid LLM response", details: Optional[Dict[str, Any]] = None
+    ):
         super().__init__(message, details=details)
         self.code = "LLM_INVALID_RESPONSE"
 
@@ -195,7 +211,12 @@ class CentaurError(PsyAIException):
 class CentaurAPIError(CentaurError):
     """Exception raised for Centaur API errors."""
 
-    def __init__(self, message: str, status_code: Optional[int] = None, details: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        message: str,
+        status_code: Optional[int] = None,
+        details: Optional[Dict[str, Any]] = None,
+    ):
         super().__init__(message, details=details)
         self.code = "CENTAUR_API_ERROR"
         self.status_code = status_code
@@ -204,7 +225,9 @@ class CentaurAPIError(CentaurError):
 class CentaurUnavailableError(CentaurError):
     """Exception raised when Centaur service is unavailable."""
 
-    def __init__(self, message: str = "Centaur service unavailable", details: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self, message: str = "Centaur service unavailable", details: Optional[Dict[str, Any]] = None
+    ):
         super().__init__(message, details=details)
         self.code = "CENTAUR_UNAVAILABLE"
 
@@ -254,7 +277,9 @@ class SessionNotFoundError(ChatError):
 class ExpertUnavailableError(ChatError):
     """Exception raised when no expert is available."""
 
-    def __init__(self, message: str = "No expert available", details: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self, message: str = "No expert available", details: Optional[Dict[str, Any]] = None
+    ):
         super().__init__(message, details=details)
         self.code = "EXPERT_UNAVAILABLE"
 
@@ -327,7 +352,9 @@ class HITLError(PsyAIException):
 class ReviewQueueEmptyError(HITLError):
     """Exception raised when review queue is empty."""
 
-    def __init__(self, message: str = "Review queue is empty", details: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self, message: str = "Review queue is empty", details: Optional[Dict[str, Any]] = None
+    ):
         super().__init__(message, details=details)
         self.code = "REVIEW_QUEUE_EMPTY"
 

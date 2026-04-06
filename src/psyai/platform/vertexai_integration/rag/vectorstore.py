@@ -146,6 +146,7 @@ class VertexVectorStoreManager:
             # Generate IDs if not provided
             if ids is None:
                 import uuid
+
                 ids = [str(uuid.uuid4()) for _ in texts]
 
             # Build datapoints for upload
@@ -188,6 +189,7 @@ class VertexVectorStoreManager:
             # Generate IDs if not provided
             if ids is None:
                 import uuid
+
                 ids = [str(uuid.uuid4()) for _ in texts]
 
             # Build datapoints for upload

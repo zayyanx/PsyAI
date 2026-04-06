@@ -109,7 +109,9 @@ class Message(BaseModel):
 
     # Relationships
     session = relationship("ChatSession", back_populates="messages")
-    review = relationship("Review", back_populates="message", uselist=False, cascade="all, delete-orphan")
+    review = relationship(
+        "Review", back_populates="message", uselist=False, cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<Message(id={self.id}, role={self.role}, session_id={self.session_id})>"
@@ -156,7 +158,9 @@ class Dataset(BaseModel):
     metadata = Column(JSON, nullable=True)
 
     # Relationships
-    examples = relationship("DatasetExample", back_populates="dataset", cascade="all, delete-orphan")
+    examples = relationship(
+        "DatasetExample", back_populates="dataset", cascade="all, delete-orphan"
+    )
     evaluations = relationship("Evaluation", back_populates="dataset", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
@@ -207,7 +211,9 @@ class Evaluation(BaseModel):
 
     # Relationships
     dataset = relationship("Dataset", back_populates="evaluations")
-    results = relationship("EvaluationResult", back_populates="evaluation", cascade="all, delete-orphan")
+    results = relationship(
+        "EvaluationResult", back_populates="evaluation", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<Evaluation(id={self.id}, name={self.name})>"

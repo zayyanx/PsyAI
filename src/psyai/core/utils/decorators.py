@@ -68,7 +68,9 @@ def timer(func: Callable[..., T]) -> Callable[..., T]:
     return sync_wrapper
 
 
-def log_entry_exit(log_args: bool = False, log_result: bool = False) -> Callable[[Callable[..., T]], Callable[..., T]]:
+def log_entry_exit(
+    log_args: bool = False, log_result: bool = False
+) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """
     Decorator to log function entry and exit.
 
@@ -158,7 +160,9 @@ def log_entry_exit(log_args: bool = False, log_result: bool = False) -> Callable
     return decorator
 
 
-def deprecated(reason: str, replacement: Optional[str] = None) -> Callable[[Callable[..., T]], Callable[..., T]]:
+def deprecated(
+    reason: str, replacement: Optional[str] = None
+) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """
     Decorator to mark a function as deprecated.
 

@@ -80,11 +80,13 @@ def create_conversational_chain(
         raise ValueError(f"Invalid memory type: {memory_type}")
 
     # Create prompt with memory placeholder
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_message),
-        MessagesPlaceholder(variable_name="history"),
-        ("human", "{input}"),
-    ])
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", system_message),
+            MessagesPlaceholder(variable_name="history"),
+            ("human", "{input}"),
+        ]
+    )
 
     # Create chain
     chain = ConversationChain(
@@ -282,9 +284,7 @@ class ConversationManager:
         Example:
             >>> manager.add_context("The user prefers technical explanations")
         """
-        self.chain.memory.chat_memory.add_message(
-            SystemMessage(content=context)
-        )
+        self.chain.memory.chat_memory.add_message(SystemMessage(content=context))
 
         logger.debug(
             "conversation_context_added",

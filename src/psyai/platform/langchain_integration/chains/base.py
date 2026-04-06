@@ -75,10 +75,12 @@ def create_chat_chain(
     """
     client = get_langchain_client(model_name=model_name)
 
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_message),
-        ("human", human_message_template),
-    ])
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", system_message),
+            ("human", human_message_template),
+        ]
+    )
 
     chain = prompt | client.llm | StrOutputParser()
 

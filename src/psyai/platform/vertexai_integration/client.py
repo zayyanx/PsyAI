@@ -59,7 +59,9 @@ class VertexAIClient:
         self.max_tokens = max_tokens or settings.vertex_max_tokens
 
         if not self.project_id:
-            raise ValueError("GCP project_id is required. Set gcp_project_id in config or environment.")
+            raise ValueError(
+                "GCP project_id is required. Set gcp_project_id in config or environment."
+            )
 
         # Initialize Vertex AI
         vertexai.init(project=self.project_id, location=self.location)

@@ -196,10 +196,14 @@ class ConversationalAgent:
 
         history = []
         for content in self.chat.history:
-            history.append({
-                "role": content.role,
-                "content": "".join([part.text for part in content.parts if hasattr(part, "text")]),
-            })
+            history.append(
+                {
+                    "role": content.role,
+                    "content": "".join(
+                        [part.text for part in content.parts if hasattr(part, "text")]
+                    ),
+                }
+            )
 
         return history
 

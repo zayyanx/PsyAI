@@ -204,7 +204,9 @@ class CentaurClient:
             logger.error("centaur_network_error", endpoint=endpoint, error=str(e))
             raise APIError(f"Network error: {str(e)}") from e
         except Exception as e:
-            if isinstance(e, (AuthenticationError, RateLimitError, ValidationError, APIError, LLMError)):
+            if isinstance(
+                e, (AuthenticationError, RateLimitError, ValidationError, APIError, LLMError)
+            ):
                 raise
             logger.error("centaur_unexpected_error", error=str(e))
             raise APIError(f"Unexpected error: {str(e)}") from e
