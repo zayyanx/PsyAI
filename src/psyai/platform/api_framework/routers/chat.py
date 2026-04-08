@@ -7,14 +7,18 @@ Handles chat sessions and messages.
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
 from sqlalchemy.orm import Session
 
+from psyai.core.config import get_settings
 from psyai.core.logging import get_logger
 from psyai.platform.api_framework.dependencies import get_current_active_user
 from psyai.platform.api_framework.schemas import (
     ChatSessionCreate,
     ChatSessionResponse,
+    GPUChatResponse,
+    GPUSendMessageRequest,
     MessageCreate,
     MessageResponse,
 )
+from psyai.platform.lambda_integration import get_lambda_gpu_service
 from psyai.platform.storage_layer import (
     ChatSessionRepository,
     MessageRepository,
@@ -23,6 +27,7 @@ from psyai.platform.storage_layer import (
 )
 
 logger = get_logger(__name__)
+settings = get_settings()
 
 router = APIRouter()
 
@@ -295,6 +300,109 @@ async def send_message(
     logger.info("message_sent", message_id=message.id, session_id=session_id)
 
     return message
+
+
+@router.post(
+    "/sessions/{session_id}/gpu/messages",
+    response_model=GPUChatResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Send message via Lambda GPU inference",
+)
+async def send_gpu_message(
+    session_id: int,
+    message_data: GPUSendMessageRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Send a message and generate assistant response using Lambda GPU-backed inference.
+
+    This endpoint launches/reuses Lambda GPU instances on demand and can optionally
+    terminate the active instance after generating the response.
+    """
+    session_repo = ChatSessionRepository(db)
+    message_repo = MessageRepository(db)
+
+    session = session_repo.get(session_id)
+
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session not found",
+        )
+
+    if session.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this session",
+        )
+
+    if not settings.lambda_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Lambda GPU integration is disabled. Set LAMBDA_ENABLED=true.",
+        )
+
+    user_message = message_repo.create(
+        session_id=session_id,
+        role="user",
+        content=message_data.content,
+        needs_review=False,
+    )
+
+    session_messages = message_repo.get_session_messages(session_id=session_id, skip=0, limit=100)
+    inference_messages = [
+        {"role": msg.role, "content": msg.content}
+        for msg in session_messages
+        if msg.role in {"system", "user", "assistant"}
+    ]
+    if not inference_messages or inference_messages[-1].get("content") != message_data.content:
+        inference_messages.append({"role": "user", "content": message_data.content})
+
+    lambda_service = get_lambda_gpu_service()
+    completion = await lambda_service.chat_completion(
+        messages=inference_messages,
+        model=message_data.model,
+        max_tokens=message_data.max_tokens,
+        temperature=message_data.temperature,
+    )
+
+    assistant_message = message_repo.create(
+        session_id=session_id,
+        role="assistant",
+        content=completion.content,
+        needs_review=False,
+        metadata={
+            "provider": "lambda",
+            "model": completion.model,
+            "latency_ms": completion.latency_ms,
+            "instance_id": completion.instance_id,
+            "instance_ip": completion.instance_ip,
+        },
+    )
+
+    if message_data.auto_shutdown_after_response:
+        await lambda_service.shutdown_active_instance(reason="request_auto_shutdown")
+
+    logger.info(
+        "gpu_message_completed",
+        session_id=session_id,
+        user_message_id=user_message.id,
+        assistant_message_id=assistant_message.id,
+        model=completion.model,
+        latency_ms=completion.latency_ms,
+        instance_id=completion.instance_id,
+    )
+
+    return GPUChatResponse(
+        session_id=session_id,
+        user_message=user_message,
+        assistant_message=assistant_message,
+        inference_model=completion.model,
+        lambda_instance_id=completion.instance_id,
+        lambda_instance_ip=completion.instance_ip,
+        latency_ms=completion.latency_ms,
+    )
 
 
 @router.websocket("/ws/{session_id}")

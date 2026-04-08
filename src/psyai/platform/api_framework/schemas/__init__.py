@@ -15,6 +15,8 @@ from psyai.platform.api_framework.schemas.chat import (
     ChatResponse,
     ChatSessionCreate,
     ChatSessionResponse,
+    GPUChatResponse,
+    GPUSendMessageRequest,
     MessageCreate,
     MessageResponse,
 )
@@ -41,4 +43,6 @@ __all__ = [
     "MessageResponse",
     "ChatRequest",
     "ChatResponse",
+    "GPUSendMessageRequest",
+    "GPUChatResponse",
 ]

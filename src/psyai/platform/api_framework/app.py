@@ -14,6 +14,7 @@ from psyai.core.logging import get_logger
 from psyai.platform.api_framework.middleware.error_handler import add_error_handlers
 from psyai.platform.api_framework.middleware.logging import LoggingMiddleware
 from psyai.platform.api_framework.routers import auth, chat, health, users
+from psyai.platform.lambda_integration import close_lambda_gpu_service
 from psyai.platform.storage_layer import close_db, init_db
 
 logger = get_logger(__name__)
@@ -48,6 +49,13 @@ async def lifespan(app: FastAPI):
         logger.info("database_closed")
     except Exception as e:
         logger.error("database_close_failed", error=str(e))
+
+    # Close Lambda GPU service clients
+    try:
+        await close_lambda_gpu_service()
+        logger.info("lambda_gpu_service_closed")
+    except Exception as e:
+        logger.error("lambda_gpu_service_close_failed", error=str(e))
 
 
 def create_app() -> FastAPI:

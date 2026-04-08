@@ -1,5 +1,7 @@
 """Tests for API endpoints."""
 
+from types import SimpleNamespace
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -286,3 +288,89 @@ class TestChatEndpoints:
         data = response.json()
         assert len(data) > 0
         assert data[0]["content"] == "Test message"
+
+    def test_send_gpu_message(self, client, test_user, auth_headers, monkeypatch):
+        """Test sending a message through Lambda GPU endpoint."""
+
+        class _MockLambdaService:
+            async def chat_completion(self, messages, model=None, max_tokens=512, temperature=0.2):
+                assert len(messages) >= 1
+                return SimpleNamespace(
+                    content="GPU assistant response",
+                    model=model or "zai-org/GLM-4.7-Flash",
+                    latency_ms=42.5,
+                    raw_response={"choices": []},
+                    instance_id="instance-123",
+                    instance_ip="10.0.0.5",
+                )
+
+            async def shutdown_active_instance(self, reason="manual"):
+                assert reason == "request_auto_shutdown"
+                return True
+
+        monkeypatch.setattr(
+            "psyai.platform.api_framework.routers.chat.get_lambda_gpu_service",
+            lambda: _MockLambdaService(),
+        )
+        monkeypatch.setattr(
+            "psyai.platform.api_framework.routers.chat.settings.lambda_enabled",
+            True,
+        )
+
+        session_response = client.post(
+            "/api/v1/chat/sessions",
+            headers=auth_headers,
+            json={"mode": "ai"},
+        )
+        session_id = session_response.json()["id"]
+
+        response = client.post(
+            f"/api/v1/chat/sessions/{session_id}/gpu/messages",
+            headers=auth_headers,
+            json={
+                "content": "Hello GPU",
+                "max_tokens": 256,
+                "temperature": 0.1,
+                "auto_shutdown_after_response": True,
+            },
+        )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert data["session_id"] == session_id
+        assert data["assistant_message"]["content"] == "GPU assistant response"
+        assert data["inference_model"] == "zai-org/GLM-4.7-Flash"
+        assert data["lambda_instance_id"] == "instance-123"
+        assert data["lambda_instance_ip"] == "10.0.0.5"
+        assert data["latency_ms"] == 42.5
+
+    def test_send_gpu_message_unauthorized(self, client):
+        """Test GPU message endpoint requires authentication."""
+        response = client.post(
+            "/api/v1/chat/sessions/1/gpu/messages",
+            json={"content": "Hello GPU"},
+        )
+
+        assert response.status_code == 401
+
+    def test_send_gpu_message_disabled(self, client, test_user, auth_headers, monkeypatch):
+        """Test GPU message endpoint returns 503 when disabled."""
+        monkeypatch.setattr(
+            "psyai.platform.api_framework.routers.chat.settings.lambda_enabled",
+            False,
+        )
+
+        session_response = client.post(
+            "/api/v1/chat/sessions",
+            headers=auth_headers,
+            json={"mode": "ai"},
+        )
+        session_id = session_response.json()["id"]
+
+        response = client.post(
+            f"/api/v1/chat/sessions/{session_id}/gpu/messages",
+            headers=auth_headers,
+            json={"content": "Hello GPU"},
+        )
+
+        assert response.status_code == 503

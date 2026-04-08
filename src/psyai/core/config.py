@@ -100,6 +100,79 @@ class Settings(BaseSettings):
     centaur_timeout: int = Field(default=30, description="Centaur API timeout")
     centaur_max_retries: int = Field(default=3, description="Max retries for Centaur API")
 
+    # Lambda Cloud GPU Inference Configuration
+    lambda_enabled: bool = Field(default=False, description="Enable Lambda GPU inference routing")
+    lambda_cloud_api_key: Optional[str] = Field(default=None, description="Lambda Cloud API key")
+    lambda_cloud_base_url: str = Field(
+        default="https://cloud.lambda.ai/api/v1",
+        description="Lambda Cloud API base URL",
+    )
+    lambda_instance_name: str = Field(
+        default="psyai-gpu-inference",
+        description="Name to assign to launched Lambda instances",
+    )
+    lambda_instance_type: str = Field(
+        default="gpu_2x_h100_sxm",
+        description="Lambda instance type name for on-demand GPU",
+    )
+    lambda_region_name: Optional[str] = Field(
+        default=None,
+        description="Optional Lambda region override for instance launch",
+    )
+    lambda_ssh_key_names: str = Field(
+        default="",
+        description="Comma-separated Lambda SSH key names for launch payload",
+    )
+    lambda_file_system_names: str = Field(
+        default="",
+        description="Comma-separated Lambda file system names for launch payload",
+    )
+    lambda_launch_timeout_seconds: int = Field(
+        default=600,
+        description="Timeout waiting for Lambda instance to become ready",
+    )
+    lambda_launch_poll_interval_seconds: int = Field(
+        default=10,
+        description="Polling interval for Lambda instance readiness checks",
+    )
+    lambda_idle_shutdown_seconds: int = Field(
+        default=900,
+        description="Idle time before terminating Lambda instance",
+    )
+    lambda_auto_shutdown_enabled: bool = Field(
+        default=True,
+        description="Automatically terminate idle Lambda instances",
+    )
+    lambda_inference_base_url: Optional[str] = Field(
+        default=None,
+        description="Optional fixed inference URL override (skips auto IP discovery)",
+    )
+    lambda_inference_scheme: str = Field(
+        default="http",
+        description="Scheme for instance-local inference endpoint",
+    )
+    lambda_inference_port: int = Field(default=8000, description="Port for inference service")
+    lambda_inference_mode: str = Field(
+        default="completion",
+        description="Inference payload mode: completion or chat",
+    )
+    lambda_inference_path: str = Field(
+        default="/v1/completions",
+        description="OpenAI-compatible inference endpoint path",
+    )
+    lambda_inference_model: str = Field(
+        default="marcelbinz/Llama-3.1-Centaur-70B",
+        description="Default model identifier sent to inference endpoint",
+    )
+    lambda_inference_api_key: Optional[str] = Field(
+        default=None,
+        description="Optional API key for inference endpoint auth",
+    )
+    lambda_inference_timeout_seconds: int = Field(
+        default=120,
+        description="Timeout for inference calls in seconds",
+    )
+
     # Vector Database Configuration
     vector_db_type: str = Field(
         default="vertex-vector-search", description="Vector DB type: vertex-vector-search, chroma"
@@ -204,6 +277,16 @@ class Settings(BaseSettings):
             raise ValueError(f"vector_db_type must be one of {allowed}")
         return v.lower()
 
+    @field_validator("lambda_inference_mode")
+    @classmethod
+    def validate_lambda_inference_mode(cls, v: str) -> str:
+        """Validate Lambda inference mode."""
+        allowed = ["completion", "chat"]
+        normalized = v.lower().strip()
+        if normalized not in allowed:
+            raise ValueError(f"lambda_inference_mode must be one of {allowed}")
+        return normalized
+
     @property
     def is_development(self) -> bool:
         """Check if running in development mode."""
@@ -237,6 +320,8 @@ class Settings(BaseSettings):
             "secret_key",
             "gcp_credentials_path",
             "centaur_api_key",
+            "lambda_cloud_api_key",
+            "lambda_inference_api_key",
             "sentry_dsn",
             "seed_admin_password",
             "database_url",

@@ -39,6 +39,19 @@ class MessageCreate(BaseModel):
     content: str = Field(..., min_length=1, description="Message content")
 
 
+class GPUSendMessageRequest(BaseModel):
+    """GPU-backed message request schema."""
+
+    content: str = Field(..., min_length=1, description="User message content")
+    model: str | None = Field(None, description="Optional model override")
+    max_tokens: int = Field(512, ge=1, le=8192, description="Maximum completion tokens")
+    temperature: float = Field(0.2, ge=0.0, le=2.0, description="Sampling temperature")
+    auto_shutdown_after_response: bool = Field(
+        False,
+        description="Terminate active Lambda instance immediately after this response",
+    )
+
+
 class MessageResponse(BaseModel):
     """Message response schema."""
 
@@ -68,3 +81,15 @@ class ChatResponse(BaseModel):
     session_id: int
     user_message: MessageResponse
     assistant_message: MessageResponse
+
+
+class GPUChatResponse(BaseModel):
+    """GPU chat response schema."""
+
+    session_id: int
+    user_message: MessageResponse
+    assistant_message: MessageResponse
+    inference_model: str
+    lambda_instance_id: str | None
+    lambda_instance_ip: str | None
+    latency_ms: float

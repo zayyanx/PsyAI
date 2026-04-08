@@ -148,8 +148,8 @@ class AuthorizationError(APIError):
         self.code = "AUTHORIZATION_ERROR"
 
 
-class RateLimitExceededError(APIError):
-    """Exception raised when rate limit is exceeded."""
+class RateLimitError(APIError):
+    """Exception raised when a generic rate limit is exceeded."""
 
     def __init__(
         self,
@@ -158,8 +158,21 @@ class RateLimitExceededError(APIError):
         details: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(message, status_code=429, details=details)
-        self.code = "RATE_LIMIT_EXCEEDED"
+        self.code = "RATE_LIMIT_ERROR"
         self.retry_after = retry_after
+
+
+class RateLimitExceededError(RateLimitError):
+    """Exception raised when rate limit is exceeded."""
+
+    def __init__(
+        self,
+        message: str = "Rate limit exceeded",
+        retry_after: Optional[int] = None,
+        details: Optional[Dict[str, Any]] = None,
+    ):
+        super().__init__(message, retry_after=retry_after, details=details)
+        self.code = "RATE_LIMIT_EXCEEDED"
 
 
 # LangChain/LLM Exceptions
